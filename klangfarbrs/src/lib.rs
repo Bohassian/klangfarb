@@ -26,38 +26,47 @@ impl HelloWorld {
 }
 
 #[derive(NativeClass)]
-#[inherit(Resource)]
+#[inherit(Node)]
 pub struct Synth {
     frequency: f32
 }
 
 #[methods]
 impl Synth {
+    fn new(_owner: &Node) -> Self {
+        Synth { frequency: 220.0 }
+    }
+
     #[export]
     fn set_freq(
         &mut self,
-        _owner: &Resource,
+        _owner: &Node,
         freq: f32
     ) {
         self.frequency = freq;
     }
 
     #[export]
-    fn _ready(&self, _owner: &Resource) {
-        let host = cpal::default_host();
-        let device = host
-            .default_output_device()
-            .expect("failed to find a default output device");
-        let config = device.default_output_config();
-
-        match config.sample_format() {
-            cpal::SampleFormat::F32 => run::<f32>(&device, &config.into()),
-            cpal::SampleFormat::I16 => run::<i16>(&device, &config.into()),
-            cpal::SampleFormat::U16 => run::<u16>(&device, &config.into()),
-        };
-
-        ();
+    fn _ready(&self, _owner: &Node) {
+        godot_print!("POOOP");
+       play();
     }
+}
+
+fn play() -> Result<(), anyhow::Error> {
+    let host = cpal::default_host();
+    let device = host
+        .default_output_device()
+        .expect("failed to find a default output device");
+    let config = device.default_output_config()?;
+
+    match config.sample_format() {
+        cpal::SampleFormat::F32 => run::<f32>(&device, &config.into())?,
+        cpal::SampleFormat::I16 => run::<i16>(&device, &config.into())?,
+        cpal::SampleFormat::U16 => run::<u16>(&device, &config.into())?,
+    }
+
+    Ok(())
 }
 
 fn run<T>(device: &cpal::Device, config: &cpal::StreamConfig) -> Result<(), anyhow::Error>
@@ -126,6 +135,7 @@ fn write_data<T>(
 fn init(handle: InitHandle) {
     // Register the new `HelloWorld` type we just declared.
     handle.add_class::<HelloWorld>();
+    handle.add_class::<Synth>();
 }
 
 // Macro that creates the entry-points of the dynamic library.
