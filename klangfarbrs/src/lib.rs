@@ -1,25 +1,6 @@
 use gdnative::api::Resource;
 use gdnative::prelude::*;
 
-/// The HelloWorld "class"
-#[derive(NativeClass)]
-#[inherit(Node)]
-pub struct HelloWorld;
-
-#[methods]
-impl HelloWorld {
-    fn new(_owner: &Node) -> Self {
-        HelloWorld
-    }
-
-    #[export]
-    fn _ready(&self, _owner: &Node) {
-        // The `godot_print!` macro works like `println!` but prints to the Godot-editor
-        // output tab as well.
-        godot_print!("Hello, world!");
-    }
-}
-
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct Synth {
@@ -137,8 +118,7 @@ pub mod test {
 
 // Function that registers all exposed classes to Godot
 fn init(handle: InitHandle) {
-    // Register the new `HelloWorld` type we just declared.
-    handle.add_class::<HelloWorld>();
+    // Register the `Synth` type we declared.
     handle.add_class::<Synth>();
 }
 
