@@ -1,5 +1,8 @@
 use klangfarbrs::test::test;
 
 fn main() {
-    test();
+    match test() {
+        Ok(()) => (),
+        Err(error) => panic!("oopsie: {:?}", error),
+    };
 }

@@ -1,4 +1,4 @@
-use gdnative::api::Resource;
+// use gdnative::api::Resource;
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -24,8 +24,10 @@ impl Synth {
 
     #[export]
     fn _ready(&self, _owner: &Node) {
-        godot_print!("POOOP");
-        test::test();
+        match test::test() {
+            Ok(()) => godot_print!("POOOP"),
+            Err(error) => godot_print!("SHITE! {:?}", error),
+        };
     }
 }
 
