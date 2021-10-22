@@ -59,17 +59,77 @@ pub mod test {
         T: cpal::Sample,
     {
         // Create a signal chain to play back 1 second of each oscillator at A4.
-        let hz = signal::rate(config.sample_rate.0 as f64).const_hz(440.0);
+        let base_freq = 440.0;
+        let multipliers = [0.8, 1.0, 1.2, 1.7, 2.9, 4.5, 8.8, 1.9, 3.6];
+        let freqs = multipliers.map(|m| signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * m));
+        let _sines = freqs.map(|f| f.clone().sine());
+
+        // Shitty naive implementation until Rust clicks.
+        let hz_0 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 0.8);
+        let hz_1 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 1.0);
+        let hz_2 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 1.2);
+        let hz_3 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 1.7);
+        let hz_4 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 2.9);
+        let hz_5 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 4.5);
+        let hz_6 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 8.8);
+        let hz_7 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 1.9);
+        let hz_8 = signal::rate(config.sample_rate.0 as f64).const_hz(base_freq * 3.6);
+
+        let sine_0 = hz_0.clone().sine().scale_amp(0.03);
+        let sine_1 = hz_1.clone().sine();
+        let sine_2 = hz_2.clone().sine().scale_amp(0.8);
+        let sine_3 = hz_3.clone().sine().scale_amp(0.004);
+        let sine_4 = hz_4.clone().sine().scale_amp(0.03);
+        let sine_5 = hz_5.clone().sine().scale_amp(0.02);
+        let sine_6 = hz_6.clone().sine().scale_amp(0.001);
+        let sine_7 = hz_7.clone().sine().scale_amp(0.006);
+        let sine_8 = hz_8.clone().sine().scale_amp(0.05);
+
+
+        // let hz = signal::rate(config.sample_rate.0 as f64).const_hz(440.0);
         let one_sec = config.sample_rate.0 as usize;
-        let mut synth = hz
-            .clone()
-            .sine()
+
+        // let mut sin_a = hz
+        //     .clone()
+        //     .sine();
+
+        // let mut sin_b = hz_b
+        //     .clone()
+        //     .sine();
+
+        let mut synth = sine_0
+            .add_amp(sine_1)
+            .add_amp(sine_2)
+            .add_amp(sine_3)
+            .add_amp(sine_4)
+            .add_amp(sine_5)
+            .add_amp(sine_6)
+            .add_amp(sine_7)
+            .add_amp(sine_8)
             .take(one_sec)
-            .chain(hz.clone().saw().take(one_sec))
-            .chain(hz.clone().square().take(one_sec))
-            .chain(hz.clone().noise_simplex().take(one_sec))
-            .chain(signal::noise(0).take(one_sec))
             .map(|s| s.to_sample::<f32>() * 0.2);
+
+        // let mut synth = sines[0]
+        //     .add_amp(sines[1])
+        //     .add_amp(sines[2])
+        //     .add_amp(sines[3])
+        //     .add_amp(sines[4])
+        //     .add_amp(sines[5])
+        //     .add_amp(sines[6])
+        //     .add_amp(sines[7])
+        //     .add_amp(sines[8])
+        //     .take(one_sec)
+        //     .map(|s| s.to_sample::<f32>() * 0.2);
+        // let mut synth = sin_a.add_amp(sin_b).take(one_sec).map(|s| s.to_sample::<f32>() * 0.2);
+        // let mut synth = hz
+        //     .clone()
+        //     .sine()
+        //     .take(one_sec)
+        //     .chain(hz.clone().saw().take(one_sec))
+        //     .chain(hz.clone().square().take(one_sec))
+        //     .chain(hz.clone().noise_simplex().take(one_sec))
+        //     .chain(signal::noise(0).take(one_sec))
+        //     .map(|s| s.to_sample::<f32>() * 0.2);
 
         // A channel for indicating when playback has completed.
         let (complete_tx, complete_rx) = mpsc::sync_channel(1);
