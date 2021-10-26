@@ -1,20 +1,22 @@
 // use gdnative::api::Resource;
 use gdnative::prelude::*;
+use gdnative::core_types::TypedArray;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct MonoBuffer {
-    frames: [f32; 512]
+    #[property]
+    frames: TypedArray<f32>
 }
 
-pub fn fill_frames() -> [f32; 512] {
+pub fn fill_frames() -> TypedArray<f32> {
     let tau = std::f32::consts::FRAC_PI_2;
     let frequency = 440.0;
     let sample_rate = 8000.0;
-    let mut frames = [0.0; 512];
+    let mut frames = TypedArray::new();
 
     for i in 0..512 {
-        frames[i] = f32::sin(tau * frequency * i as f32/sample_rate);
+        frames.push(f32::sin(tau * frequency * i as f32/sample_rate));
     }
 
     return frames
@@ -24,10 +26,6 @@ pub fn fill_frames() -> [f32; 512] {
 impl MonoBuffer {
     fn new(_owner: &Node) -> Self {
         MonoBuffer { frames: fill_frames() }
-    }
-
-    fn frames(&self) -> [f32; 512] {
-        return self.frames;
     }
 
     #[export]
