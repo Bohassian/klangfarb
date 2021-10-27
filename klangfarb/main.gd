@@ -1,17 +1,24 @@
-extends Node
+tool
+extends AudioStreamPlayer
+var playback: AudioStreamPlayback
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
-onready var data = preload("res://klangfarbrs.gdnlib")
-# var buffer = MonoBuffer.new()
+var Buff = preload("res://Main.gdns")
+var buff_node = Buff.new()
 
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	print("Poop", data.frames());
+func _create_generator() -> void:
+	stream = AudioStreamGenerator.new()
+	stream.mix_rate = 8000.0 # Setting mix rate is only possible before play().
+	playback = get_stream_playback()
+
+func _fill_buffer() -> void:
+	var to_fill = playback.get_frames_available()
+	while to_fill > 0:
+		playback.push_frame(Vector2.ONE * buff_node.frames) # Audio frames are stereo.
+#		_phase = fmod(_phase + frequency() / GDawConfig.sample_rate, 1.0)
+#		_update_state()
+		to_fill -= 1
 
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
+func _ready() -> void:
+#	_update_envelope()
+	_create_generator()
