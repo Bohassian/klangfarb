@@ -1,15 +1,17 @@
 // use gdnative::api::Resource;
 use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
+use std::f32;
+use std::f32::consts::TAU;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
-pub struct MonoBuffer {}
+pub struct SineWave {}
 
 #[methods]
-impl MonoBuffer {
+impl SineWave {
     fn new(_owner: &Node) -> Self {
-        MonoBuffer {}
+        SineWave {}
     }
 
     #[export]
@@ -23,7 +25,7 @@ impl MonoBuffer {
         let calculated_duration = sample_rate * duration as f32;
 
         for i in 0..calculated_duration as i32 {
-            frames.push(f32::sin(std::f32::consts::TAU * frequency * i as f32/sample_rate));
+            frames.push((TAU * frequency * i as f32/sample_rate).sin());
         }
 
         return frames
@@ -32,8 +34,8 @@ impl MonoBuffer {
 
 // Function that registers all exposed classes to Godot
 fn init(handle: InitHandle) {
-    // Register the `MonoBuffer` type we declared.
-    handle.add_class::<MonoBuffer>();
+    // Register the `Sine` type we declared.
+    handle.add_class::<SineWave>();
 }
 
 // Macro that creates the entry-points of the dynamic library.

@@ -1,8 +1,8 @@
 extends AudioStreamPlayer
 var playback: AudioStreamPlayback = null
 
-var MonoBuffer = preload("res://MonoBuffer.gdns")
-var buffer = MonoBuffer.new()
+var SineWave = preload("res://SineWave.gdns")
+var buffer = SineWave.new()
 var duration = 3
 var samples = buffer.frames(440.0, 44100.0, duration)
 var sample_count = samples.size()
