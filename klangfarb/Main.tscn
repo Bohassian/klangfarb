@@ -3,7 +3,6 @@
 [ext_resource path="res://main.gd" type="Script" id=2]
 
 [sub_resource type="AudioStreamGenerator" id=1]
-mix_rate = 8000.0
 
 [node name="Audio" type="AudioStreamPlayer"]
 stream = SubResource( 1 )

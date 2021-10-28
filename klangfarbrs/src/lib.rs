@@ -10,13 +10,13 @@ pub struct MonoBuffer {
 }
 
 pub fn fill_frames() -> TypedArray<f32> {
-    let tau = std::f32::consts::FRAC_PI_2;
     let frequency = 440.0;
-    let sample_rate = 8000.0;
+    let sample_rate = 44100.0;
+    let duration = sample_rate * 3.0;
     let mut frames = TypedArray::new();
 
-    for i in 0..512 {
-        frames.push(f32::sin(tau * frequency * i as f32/sample_rate));
+    for i in 0..duration as i32 {
+        frames.push(f32::sin(std::f32::consts::TAU * frequency * i as f32/sample_rate));
     }
 
     return frames
