@@ -6,4 +6,5 @@
 
 [node name="Audio" type="AudioStreamPlayer"]
 stream = SubResource( 1 )
+volume_db = -27.262
 script = ExtResource( 2 )

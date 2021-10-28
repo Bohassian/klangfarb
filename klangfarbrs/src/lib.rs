@@ -4,33 +4,29 @@ use gdnative::core_types::TypedArray;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
-pub struct MonoBuffer {
-    #[property]
-    frames: TypedArray<f32>
-}
-
-pub fn fill_frames() -> TypedArray<f32> {
-    let frequency = 440.0;
-    let sample_rate = 44100.0;
-    let duration = sample_rate * 3.0;
-    let mut frames = TypedArray::new();
-
-    for i in 0..duration as i32 {
-        frames.push(f32::sin(std::f32::consts::TAU * frequency * i as f32/sample_rate));
-    }
-
-    return frames
-}
+pub struct MonoBuffer {}
 
 #[methods]
 impl MonoBuffer {
     fn new(_owner: &Node) -> Self {
-        MonoBuffer { frames: fill_frames() }
+        MonoBuffer {}
     }
 
     #[export]
     fn _ready(&self, _owner: &Node) {
         godot_print!("Whatever, connected.")
+    }
+
+    #[export]
+    pub fn frames(&self, _owner: &Node, frequency: f32, sample_rate: f32, duration: i32) -> TypedArray<f32> {
+        let mut frames = TypedArray::new();
+        let calculated_duration = sample_rate * duration as f32;
+
+        for i in 0..calculated_duration as i32 {
+            frames.push(f32::sin(std::f32::consts::TAU * frequency * i as f32/sample_rate));
+        }
+
+        return frames
     }
 }
 
