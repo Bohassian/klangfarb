@@ -1,7 +1,6 @@
 // use gdnative::api::Resource;
 use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
-use std::f32;
 use std::f32::consts::TAU;
 
 #[derive(NativeClass)]
