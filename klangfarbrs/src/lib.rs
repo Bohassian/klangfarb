@@ -5,12 +5,14 @@ use std::f32::consts::TAU;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
-pub struct SineWave {}
+pub struct SineWave {
+    sample_rate: f32
+}
 
 #[methods]
 impl SineWave {
     fn new(_owner: &Node) -> Self {
-        SineWave {}
+        SineWave { sample_rate: 44100.0 }
     }
 
     #[export]
@@ -19,12 +21,17 @@ impl SineWave {
     }
 
     #[export]
-    pub fn frames(&self, _owner: &Node, frequency: f32, sample_rate: f32, duration: i32) -> TypedArray<f32> {
-        let mut frames = TypedArray::new();
-        let calculated_duration = sample_rate * duration as f32;
+    fn set_sample_rate(&mut self, _owner: &Node, sample_rate: f32) {
+        self.sample_rate = sample_rate;
+    }
 
-        for i in 0..calculated_duration as i32 {
-            frames.push((TAU * frequency * i as f32/sample_rate).sin());
+    #[export]
+    pub fn frames(&self, _owner: &Node, frequency: f32, duration: i32) -> TypedArray<Vector2> {
+        let mut frames = TypedArray::new();
+
+        for i in 0..duration as i32 {
+            let sample = (TAU * frequency * i as f32/self.sample_rate).sin();
+            frames.push(Vector2::new(sample, sample));
         }
 
         return frames

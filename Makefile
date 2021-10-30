@@ -7,3 +7,6 @@ build:
 
 refresh_lib: build
 	cp $(LIB_PATH) klangfarb
+
+release:
+	cd klangfarbrs && cargo build --release
