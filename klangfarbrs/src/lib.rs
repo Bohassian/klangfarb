@@ -1,4 +1,12 @@
-// use gdnative::api::Resource;
+//! # Rust audio oscillator for the Godot game engine
+//!
+//! This crate contains logic for generating samples for audio wave forms which are then
+//! used to fill Godot's `AudioStreamPlayback` buffers. Scripts using this code as a dynamic
+//! library will be able to request a certain number of frames (represented as a `Vector2`)
+//! at a specific frequency. Because of how the Godot bindings work, the wave structs will
+//! have a default sample rate at 48kHz. You'll want to set it in your script's `_ready`
+//! function to match the sample rate in Godot.
+
 use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
 use std::f32::consts::TAU;
@@ -6,23 +14,31 @@ use std::f32::consts::TAU;
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct SineWave {
-    sample_rate: f32,
-    phase: f32
+    pub sample_rate: f32,
+    pub phase: f32
 }
+
+/// # Examples
+///
+/// ```
+/// use klangfarbrs::SineWave;
+/// let mut wave = SineWave { sample_rate: 24000.0, phase: 0.0 };
+/// assert_eq!(wave.sample_rate, 24000.0);
+/// ```
 
 #[methods]
 impl SineWave {
-    fn new(_owner: &Node) -> Self {
-        SineWave { sample_rate: 44100.0, phase: 0.0 }
+    pub fn new(_owner: &Node) -> Self {
+        Self { sample_rate: 48000.0, phase: 0.0 }
     }
 
     #[export]
     fn _ready(&self, _owner: &Node) {
-        godot_print!("Whatever, connected.")
+        godot_print!("DAS IST KLANGFARBRS.")
     }
 
     #[export]
-    fn set_sample_rate(&mut self, _owner: &Node, sample_rate: f32) {
+    pub fn set_sample_rate(&mut self, _owner: &Node, sample_rate: f32) {
         self.sample_rate = sample_rate;
     }
 
