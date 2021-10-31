@@ -23,9 +23,9 @@ pub struct Osc {
 }
 
 /// The various waveforms the `Osc` can generate.
-enum Waveform {
+pub enum Waveform {
     Sine,
-    // Square,
+    Square,
     // Triangle,
     // Saw,
     // Noise,
@@ -36,6 +36,13 @@ fn generate_sample(osc: &Osc) -> f32 {
     match osc.waveform {
         Waveform::Sine => {
             (TAU * osc.phase).sin()
+        },
+        Waveform::Square => {
+            if osc.phase < 0.5 {
+                -1.0
+            } else {
+                1.0
+            }
         }
     }
 }
@@ -76,6 +83,16 @@ impl Osc {
     #[export]
     fn _ready(&self, _owner: &Node) {
         godot_print!("DAS IST KLANGFARBRS.")
+    }
+
+    #[export]
+    fn sine(&mut self, _owner: &Node) {
+        self.waveform = Waveform::Sine
+    }
+
+    #[export]
+    fn square(&mut self, _owner: &Node) {
+        self.waveform = Waveform::Square
     }
 
     #[export]
