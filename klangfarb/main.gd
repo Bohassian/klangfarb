@@ -4,9 +4,9 @@ extends AudioStreamPlayer
 export(float, 20, 8000, 10) var freq = 440.0
 
 # load the GDNative script connected to the rust lib
-var SineWave = preload("res://SineWave.gdns")
+var Osc = preload("res://Osc.gdns")
 # make an instance of our one "class" in rust lib
-var wave = SineWave.new()
+var wave = Osc.new()
 
 # initialize the Godot stream we fill up with samples
 var playback: AudioStreamPlayback = null

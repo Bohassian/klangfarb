@@ -11,25 +11,66 @@ use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
 use std::f32::consts::TAU;
 
+/// This struct is used as a class in Godot. It is a "numerically controlled oscillator"
+/// which is driven by a phasor. The sample rate and waveform should be set after you
+/// create a new instance in GDScript.
 #[derive(NativeClass)]
 #[inherit(Node)]
-pub struct SineWave {
+pub struct Osc {
+    pub waveform: Waveform,
     pub sample_rate: f32,
-    pub phase: f32
+    phase: f32,
+}
+
+/// The various waveforms the `Osc` can generate.
+enum Waveform {
+    Sine,
+    // Square,
+    // Triangle,
+    // Saw,
+    // Noise,
+}
+
+/// Generates the next sample for an oscillator based on its waveform.
+fn generate_sample(osc: &Osc) -> f32 {
+    match osc.waveform {
+        Waveform::Sine => {
+            (TAU * osc.phase).sin()
+        }
+    }
+}
+
+/// Phase stays between 0.0 and 1.0 and represents position on the axis of time
+/// for a given wave form. Since audio signals are periodic, we can just calculate
+/// the first cycle of a wave repeatedly. This also prevents pitch drift caused by
+/// floating point errors over time.
+fn calculate_phase(osc: &Osc, frequency: f32) -> f32 {
+    (osc.phase + (frequency / osc.sample_rate)) % 1.0
 }
 
 /// # Examples
 ///
+/// It is more work than benefit to figure out how to instantiate a Godot object (Node)
+/// that does not behave as typical Rust. However, I wanted to try out the feature of
+/// examples in the documentation that run as automated tests. :galaxy-brain:
+///
 /// ```
-/// use klangfarbrs::SineWave;
-/// let mut wave = SineWave { sample_rate: 24000.0, phase: 0.0 };
+/// use klangfarbrs::Osc;
+/// let mut wave = Osc { sample_rate: 24000.0, phase: 0.0 };
 /// assert_eq!(wave.sample_rate, 24000.0);
 /// ```
-
 #[methods]
-impl SineWave {
+impl Osc {
+    /// # Examples
+    ///
+    /// ```gdscript
+    /// var Osc = preload("res://Osc.gdns")
+    /// var wave = Osc.new()
+    /// wave.set_sample_rate(24000.0)
+    /// wave.square() # changes to a square wave
+    /// ```
     pub fn new(_owner: &Node) -> Self {
-        Self { sample_rate: 48000.0, phase: 0.0 }
+        Self { waveform: Waveform::Sine, sample_rate: 48000.0, phase: 0.0 }
     }
 
     #[export]
@@ -47,9 +88,9 @@ impl SineWave {
         let mut frames = TypedArray::new();
 
         for _i in 0..duration {
-            let sample = (TAU * self.phase).sin().clamp(-1.0, 1.0);
+            let sample = generate_sample(&self);
             frames.push(Vector2::new(sample, sample));
-            self.phase = (self.phase + (frequency / self.sample_rate)) % 1.0;
+            self.phase = calculate_phase(&self, frequency);
         }
 
         return frames
@@ -58,8 +99,8 @@ impl SineWave {
 
 // Function that registers all exposed classes to Godot
 fn init(handle: InitHandle) {
-    // Register the `Sine` type we declared.
-    handle.add_class::<SineWave>();
+    // Register the `Osc` type we declared.
+    handle.add_class::<Osc>();
 }
 
 // Macro that creates the entry-points of the dynamic library.
