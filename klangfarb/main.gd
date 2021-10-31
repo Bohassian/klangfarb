@@ -23,13 +23,14 @@ func _fill_buffer() -> void:
 		# playback stream buffer
 		playback.push_buffer(wave.frames(freq, to_fill)) 
 
-func _process(delta):
+func _check_waveform():
 	if waveform == "square":
 		wave.square()
-		playback.clear_buffer()
 	else:
 		wave.sine()
-		playback.clear_buffer()
+
+func _process(_delta):
+	_check_waveform()
 	_fill_buffer()
 
 func _ready() -> void:
