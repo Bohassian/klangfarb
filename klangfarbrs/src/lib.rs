@@ -26,23 +26,35 @@ pub struct Osc {
 pub enum Waveform {
     Sine,
     Square,
-    // Triangle,
-    // Saw,
+    Triangle,
+    Sawtooth,
     // Noise,
 }
 
 /// Generates the next sample for an oscillator based on its waveform.
 fn generate_sample(osc: &Osc) -> f32 {
+    let phase = osc.phase;
+
     match osc.waveform {
         Waveform::Sine => {
-            (TAU * osc.phase).sin()
+            (TAU * phase).sin()
         },
         Waveform::Square => {
-            if osc.phase < 0.5 {
+            if phase < 0.5 {
                 -1.0
             } else {
                 1.0
             }
+        },
+        Waveform::Triangle => {
+            if phase < 0.5 {
+                4.0 * phase - 1.0
+            } else {
+                4.0 * (1.0 - phase) - 1.0
+            }
+        },
+        Waveform::Sawtooth => {
+            2.0 * phase - 1.0
         }
     }
 }
@@ -93,6 +105,16 @@ impl Osc {
     #[export]
     fn square(&mut self, _owner: &Node) {
         self.waveform = Waveform::Square
+    }
+
+    #[export]
+    fn triangle(&mut self, _owner: &Node) {
+        self.waveform = Waveform::Triangle
+    }
+
+    #[export]
+    fn sawtooth(&mut self, _owner: &Node) {
+        self.waveform = Waveform::Sawtooth
     }
 
     #[export]

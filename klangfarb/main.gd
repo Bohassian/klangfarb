@@ -3,7 +3,7 @@ extends AudioStreamPlayer
 # controllable frequency interface
 export(float, 20, 8000, 5) var freq = 440.0
 # control wave form
-export(String, "sine", "square") var waveform = "sine"
+export(String, "sine", "square", "triangle", "sawtooth") var waveform = "sine"
 
 # load the GDNative script connected to the rust lib
 var Osc = preload("res://Osc.gdns")
@@ -26,12 +26,17 @@ func _fill_buffer() -> void:
 func _check_waveform():
 	if waveform == "square":
 		wave.square()
-	else:
+	elif waveform == "sine":
 		wave.sine()
+	elif waveform == "triangle":
+		wave.triangle()
+	elif waveform == "sawtooth":
+		wave.sawtooth()
 
 func _process(_delta):
-	_check_waveform()
-	_fill_buffer()
+	if self.is_playing():
+		_check_waveform()
+		_fill_buffer()
 
 func _ready() -> void:
 	# buffer length of 100ms gives us ~realtime response to input changes
@@ -41,6 +46,5 @@ func _ready() -> void:
 	# get our AudioStreamPlayback object
 	playback = self.get_stream_playback()
 	# prefill the stream's sample buffer (which feeds DAC)
+	_check_waveform()
 	_fill_buffer()
-	# start the audio
-	self.play()
