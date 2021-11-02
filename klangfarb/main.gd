@@ -48,3 +48,11 @@ func _ready() -> void:
 	# prefill the stream's sample buffer (which feeds DAC)
 	_check_waveform()
 	_fill_buffer()
+
+func _input(event):
+	# Mouse in viewport coordinates.
+	if event is InputEventMouseButton:
+		print("Mouse Click/Unclick at: ", event.position)
+	elif event is InputEventMouseMotion:
+		freq = event.position.x
+		print("Mouse Motion at: ", event.position)
