@@ -66,8 +66,26 @@ fn generate_sample(osc: &Osc) -> f32 {
 /// for a given wave form. Since audio signals are periodic, we can just calculate
 /// the first cycle of a wave repeatedly. This also prevents pitch drift caused by
 /// floating point errors over time.
-fn calculate_phase(osc: &Osc, frequency: f32) -> f32 {
+fn next_phase(osc: &Osc, frequency: f32) -> f32 {
     (osc.phase + (frequency / osc.sample_rate)) % 1.0
+}
+
+// for (i = 0; i < nframes; ++i) {
+//     if (in[i] < x0)
+//       out[i] = (y0/x0)*in[i];
+//     else
+//       out[i] = ((1-y0)/(1-x0)) * (in[i] - x0) + y0;
+//   }
+fn bend_phase(osc: &Osc, frequency: f32, bend_factor: f32) -> f32 {
+    let current_phase = osc.phase;
+    let next_phase = next_phase(osc, frequency);
+    let step = next_phase - current_phase;
+
+    if osc.phase < bend_factor {
+        step * 2.0
+    } else {
+        step / 2.0
+    }
 }
 
 /// # Examples
@@ -126,13 +144,14 @@ impl Osc {
     }
 
     #[export]
-    pub fn frames(&mut self, _owner: &Node, frequency: f32, duration: i32) -> TypedArray<Vector2> {
+    pub fn frames(&mut self, _owner: &Node, frequency: f32, duration: i32, bend_factor: f32) -> TypedArray<Vector2> {
         let mut frames = TypedArray::new();
 
         for _i in 0..duration {
             let sample = generate_sample(&self);
             frames.push(Vector2::new(sample, sample));
-            self.phase = calculate_phase(&self, frequency);
+            // self.phase = next_phase(&self, frequency);
+            self.phase = self.phase + bend_phase(&self, frequency, bend_factor)
         }
 
         return frames

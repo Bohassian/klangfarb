@@ -2,6 +2,7 @@ extends AudioStreamPlayer
 
 # controllable frequency interface
 export(float, 20, 8000, 5) var freq = 440.0
+export(float, 0, 1, 0.1) var bend = 0.5
 # control wave form
 export(String, "sine", "square", "triangle", "sawtooth") var waveform = "sine"
 
@@ -21,7 +22,7 @@ func _fill_buffer() -> void:
 		# ask Rust to generate N frames at freq
 		# Array<Vector2> gets pushed to the 
 		# playback stream buffer
-		playback.push_buffer(wave.frames(freq, to_fill)) 
+		playback.push_buffer(wave.frames(freq, to_fill, bend)) 
 
 func _check_waveform():
 	if waveform == "square":
