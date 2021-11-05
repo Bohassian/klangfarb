@@ -1,0 +1,49 @@
+* Mono Synth MVP
+
+A Rust library that drives a GDNative script and exposes an interface for a
+monophonic Synth object. This object will produce audio frames which will
+fill Godot's ~AudioStreamPlayback~ buffer, leveraging the cross-platform
+audio I/O that Godot provides. The Rust dynamic library will need to be built
+for each platform, but it will leverage Rust's perfomance optimizations to
+enable realtime audio interactions.
+
+** Godot Synth Interface
+
+From Godot, we're primarily interested in manipulating various aspects of
+the Mono Synth. Frequency, modulation, amplitude, and any other expressive
+aspect of a single tone we can hook up. Overall volume will be controlled
+by Godot.
+
+*** Input
+
+- *Sample Rate* - Godot must send its I/O sample rate to the synth when initialized
+  This is the number of audio samples played back per second. So we need to generate
+  samples at the same rate.
+- *Frequency* - range from 20Hz to ½ the sample rate. increment may need to change
+  over the range. Human ear detects small changes at lower frequencies, but not as
+  much in the higher frequencies.
+- *Waveform* - a selection of basic waveforms will be implemented in Rust. We can
+  control which one is being generated via a switch in Godot.
+- *Phasor* - the shape of the waveform can be dynamically modified by changing the
+  shape of the phasor driving the oscillator. Given an (x,y) vector, the shape of
+  the phasor can be "bent" away from it smooth 0-1 slope.
+- *Amplitude Envelope* - this controls the volume of sound over time. Typical envelopes
+  have parameters for:
+  - *Attack* - amount of time before the waveform is at its peak
+  - *Decay* - amount of time it takes to go from peak to sustained level
+  - *Sustain* - the level (amplitude) to sustain while a note is held
+  - *Release* - the amount of time to go to 0 from sustain when note is released
+- *Filter* - a low pass filter with a two parameters:
+  - *Cutoff* the frequency where the filter begins
+  - *Resonance* ? i think its like an amplitude boost at the cutoff?
+- *Modulator* - a low frequency oscillator that can effect the frequency or filter cutoff
+
+
+*** Output
+
+Currently, the output is an array of (sample, sample) vectors, where each sample is
+a float between -1.0 and 1.0. You can request a certain number of frames, and get back
+the calculated samples to fill them. We can think of this as essentially the stereo
+audio jack from a synthesizer.
+
+  
