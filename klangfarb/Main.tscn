@@ -8,4 +8,3 @@
 stream = SubResource( 1 )
 volume_db = -13.216
 script = ExtResource( 2 )
-freq = 130.0

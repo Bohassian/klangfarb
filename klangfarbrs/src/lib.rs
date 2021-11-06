@@ -189,19 +189,34 @@ impl MonoSynth {
     }
 
     #[export]
+    fn frequency(&mut self, _owner: &Node, frequency: Hz) {
+        self.frequency = frequency
+    }
+
+    #[export]
+    fn phasor_bend(&mut self, _owner: &Node, phasor_bend: Vector2) {
+        self.phasor_bend = phasor_bend
+    }
+
+    #[export]
+    fn apply_bend(&mut self, _owner: &Node, apply_bend: bool) {
+        self.apply_bend = apply_bend
+    }
+
+    #[export]
     pub fn set_sample_rate(&mut self, _owner: &Node, sample_rate: f32) {
         self.sample_rate = sample_rate;
     }
 
     #[export]
-    pub fn frames(&mut self, _owner: &Node, frequency: f32, samples: i32) -> TypedArray<Vector2> {
+    pub fn frames(&mut self, _owner: &Node, samples: i32) -> TypedArray<Vector2> {
         let mut frames = TypedArray::new();
 
         for _i in 0..samples {
             let sample = Osc::generate_sample(&self.waveform, self.phasor.phase);
             frames.push(Vector2::new(sample, sample));
 
-            let next_phase = self.phasor.next_phase(frequency, self.sample_rate);
+            let next_phase = self.phasor.next_phase(self.frequency, self.sample_rate);
             if self.apply_bend {
                 self.phasor.phase = Bender::bend(next_phase, self.phasor_bend);
             } else {
