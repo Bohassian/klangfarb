@@ -11,18 +11,14 @@ use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
 use std::f32::consts::TAU;
 
-/// This struct is used as a class in Godot. It is a "numerically controlled oscillator"
-/// which is driven by a phasor. The sample rate and waveform should be set after you
-/// create a new instance in GDScript.
-#[derive(NativeClass)]
-#[inherit(Node)]
-pub struct Osc {
-    pub waveform: Waveform,
-    pub sample_rate: f32,
-    phase: f32,
-}
+type Sample = f32;
+type Samples = f32;
+type Hz = f32;
+type Phase = f32;
+type Amplitude = f32;
+type Millisecond = u32;
 
-/// The various waveforms the `Osc` can generate.
+/// The various waveforms the `Synth` can generate.
 pub enum Waveform {
     Sine,
     Square,
@@ -31,60 +27,100 @@ pub enum Waveform {
     // Noise,
 }
 
-/// Generates the next sample for an oscillator based on its waveform.
-fn generate_sample(osc: &Osc) -> f32 {
-    let phase = osc.phase;
+#[derive(NativeClass)]
+#[inherit(Node)]
+pub struct MonoSynth {
+    pub phasor: Phasor,
+    pub waveform: Waveform,
+    #[property]
+    pub sample_rate: Samples,
+    #[property]
+    pub frequency: Hz,
+    #[property]
+    pub apply_bend: bool,
+    #[property]
+    pub phasor_bend: Vector2,
+    #[property]
+    pub continuous: bool,
+    #[property]
+    pub duration: Millisecond,
+    #[property]
+    pub attack: Millisecond,
+    #[property]
+    pub decay: Millisecond,
+    #[property]
+    pub sustain: Amplitude,
+    #[property]
+    pub release: Millisecond,
+    #[property]
+    pub cutoff: Hz,
+    // pub resonance:
+    // pub modulator:
+}
 
-    match osc.waveform {
-        Waveform::Sine => {
-            (TAU * phase).sin()
-        },
+pub struct Osc {}
 
-        Waveform::Square => {
-            if phase < 0.5 {
-                -1.0
-            } else {
-                1.0
+impl Osc {
+    pub fn generate_sample(waveform: &Waveform, phase: Phase) -> Sample {
+        let phase = phase;
+
+        match waveform {
+            Waveform::Sine => {
+                (TAU * phase).sin()
+            },
+
+            Waveform::Square => {
+                if phase < 0.5 {
+                    -1.0
+                } else {
+                    1.0
+                }
+            },
+
+            Waveform::Triangle => {
+                if phase < 0.5 {
+                    4.0 * phase - 1.0
+                } else {
+                    4.0 * (1.0 - phase) - 1.0
+                }
+            },
+
+            Waveform::Sawtooth => {
+                2.0 * phase - 1.0
             }
-        },
-
-        Waveform::Triangle => {
-            if phase < 0.5 {
-                4.0 * phase - 1.0
-            } else {
-                4.0 * (1.0 - phase) - 1.0
-            }
-        },
-
-        Waveform::Sawtooth => {
-            2.0 * phase - 1.0
         }
     }
 }
 
-/// Phase stays between 0.0 and 1.0 and represents position on the axis of time
-/// for a given wave form. Since audio signals are periodic, we can just calculate
-/// the first cycle of a wave repeatedly. This also prevents pitch drift caused by
-/// floating point errors over time.
-fn next_phase(osc: &Osc, frequency: f32) -> f32 {
-    (osc.phase + (frequency / osc.sample_rate)) % 1.0
+pub struct Phasor {
+    pub phase: Phase,
 }
 
-// for (i = 0; i < nframes; ++i) {
-//     if (in[i] < x0)
-//       out[i] = (y0/x0)*in[i];
-//     else
-//       out[i] = ((1-y0)/(1-x0)) * (in[i] - x0) + y0;
-//   }
-fn bend_phase(osc: &Osc, frequency: f32, bend_factor: f32) -> f32 {
-    let current_phase = osc.phase;
-    let next_phase = next_phase(osc, frequency);
-    let step = next_phase - current_phase;
+impl Phasor {
+    /// Phase stays between 0.0 and 1.0 and represents position on the axis of time
+    /// for a given wave form. Since audio signals are periodic, we can just calculate
+    /// the first cycle of a wave repeatedly. This also prevents pitch drift caused by
+    /// floating point errors over time.
+    pub fn next_phase(&self, frequency: Hz, sample_rate: Samples ) -> Phase {
+        (self.phase + (frequency / sample_rate)) % 1.0
+    }
+}
 
-    if osc.phase < bend_factor {
-        step * 2.0
-    } else {
-        step / 2.0
+pub struct Bender {}
+
+impl Bender {
+    // for (i = 0; i < nframes; ++i) {
+    //     if (in[i] < x0)
+    //       out[i] = (y0/x0)*in[i];
+    //     else
+    //       out[i] = ((1-y0)/(1-x0)) * (in[i] - x0) + y0;
+    //   }
+    fn bend(phase: Phase, phasor_bend: Vector2) -> f32 {
+        if phase < phasor_bend.x {
+            (phasor_bend.y / phasor_bend.x) * phase
+        } else {
+            ((1.0 - phasor_bend.y) / (1.0 - phasor_bend.x)) * (phase - phasor_bend.x) + phasor_bend.y
+        }
     }
 }
 
@@ -100,17 +136,31 @@ fn bend_phase(osc: &Osc, frequency: f32, bend_factor: f32) -> f32 {
 /// assert_eq!(wave.sample_rate, 24000.0);
 /// ```
 #[methods]
-impl Osc {
+impl MonoSynth {
     /// # Examples
     ///
     /// ```gdscript
-    /// var Osc = preload("res://Osc.gdns")
-    /// var wave = Osc.new()
+    /// var MonoSynth = preload("res://MonoSynth.gdns")
+    /// var wave = MonoSynth.new()
     /// wave.set_sample_rate(24000.0)
     /// wave.square() # changes to a square wave
     /// ```
     pub fn new(_owner: &Node) -> Self {
-        Self { waveform: Waveform::Sine, sample_rate: 48000.0, phase: 0.0 }
+        Self {
+            phasor: Phasor { phase: 0.0 },
+            waveform: Waveform::Sine,
+            sample_rate: 48000.0,
+            frequency: 440.0,
+            apply_bend: false,
+            phasor_bend: Vector2::new(0.0, 0.0),
+            continuous: true,
+            duration: 0,
+            attack: 0,
+            decay: 0,
+            sustain: 0.0,
+            release: 0,
+            cutoff: 0.0,
+        }
     }
 
     #[export]
@@ -144,14 +194,19 @@ impl Osc {
     }
 
     #[export]
-    pub fn frames(&mut self, _owner: &Node, frequency: f32, duration: i32, bend_factor: f32) -> TypedArray<Vector2> {
+    pub fn frames(&mut self, _owner: &Node, frequency: f32, samples: i32) -> TypedArray<Vector2> {
         let mut frames = TypedArray::new();
 
-        for _i in 0..duration {
-            let sample = generate_sample(&self);
+        for _i in 0..samples {
+            let sample = Osc::generate_sample(&self.waveform, self.phasor.phase);
             frames.push(Vector2::new(sample, sample));
-            // self.phase = next_phase(&self, frequency);
-            self.phase = self.phase + bend_phase(&self, frequency, bend_factor)
+
+            let next_phase = self.phasor.next_phase(frequency, self.sample_rate);
+            if self.apply_bend {
+                self.phasor.phase = Bender::bend(next_phase, self.phasor_bend);
+            } else {
+                self.phasor.phase = next_phase;
+            }
         }
 
         return frames
@@ -160,8 +215,7 @@ impl Osc {
 
 // Function that registers all exposed classes to Godot
 fn init(handle: InitHandle) {
-    // Register the `Osc` type we declared.
-    handle.add_class::<Osc>();
+    handle.add_class::<MonoSynth>();
 }
 
 // Macro that creates the entry-points of the dynamic library.

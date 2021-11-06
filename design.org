@@ -22,6 +22,7 @@ by Godot.
 - *Frequency* - range from 20Hz to ½ the sample rate. increment may need to change
   over the range. Human ear detects small changes at lower frequencies, but not as
   much in the higher frequencies.
+- *Continuous* - whether or not to produce a continuous tone or use ADSR envelope
 - *Waveform* - a selection of basic waveforms will be implemented in Rust. We can
   control which one is being generated via a switch in Godot.
 - *Phasor* - the shape of the waveform can be dynamically modified by changing the
@@ -45,5 +46,5 @@ Currently, the output is an array of (sample, sample) vectors, where each sample
 a float between -1.0 and 1.0. You can request a certain number of frames, and get back
 the calculated samples to fill them. We can think of this as essentially the stereo
 audio jack from a synthesizer.
-
   
+
