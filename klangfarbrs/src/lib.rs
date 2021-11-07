@@ -11,14 +11,15 @@ use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
 use std::f32::consts::TAU;
 
+/// Aliasing some types to distinguish various audio properties.
 type Sample = f32;
-type Samples = f32;
+type SamplesPerSecond = f32;
 type Hz = f32;
 type Phase = f32;
 type Amplitude = f32;
 type Millisecond = u32;
 
-/// The various waveforms the `Synth` can generate.
+/// The various waveforms the `MonoSynth` can generate.
 pub enum Waveform {
     Sine,
     Square,
@@ -32,30 +33,25 @@ pub enum Waveform {
 pub struct MonoSynth {
     pub phasor: Phasor,
     pub waveform: Waveform,
-    #[property]
-    pub sample_rate: Samples,
-    #[property]
+    pub sample_rate: SamplesPerSecond,
     pub frequency: Hz,
-    #[property]
     pub apply_bend: bool,
-    #[property]
     pub phasor_bend: Vector2,
-    #[property]
     pub continuous: bool,
-    #[property]
     pub duration: Millisecond,
-    #[property]
+    // ADSR amplifier
     pub attack: Millisecond,
-    #[property]
     pub decay: Millisecond,
-    #[property]
     pub sustain: Amplitude,
-    #[property]
     pub release: Millisecond,
-    #[property]
+    // filter
     pub cutoff: Hz,
     // pub resonance:
     // pub modulator:
+    pub frequency_modulation: bool,
+    pub fm_frequency: Hz,
+    pub fm_depth: Amplitude,
+    fm_phasor: Phasor,
 }
 
 pub struct Osc {}
@@ -101,7 +97,7 @@ impl Phasor {
     /// for a given wave form. Since audio signals are periodic, we can just calculate
     /// the first cycle of a wave repeatedly. This also prevents pitch drift caused by
     /// floating point errors over time.
-    pub fn next_phase(&self, frequency: Hz, sample_rate: Samples ) -> Phase {
+    pub fn next_phase(&self, frequency: Hz, sample_rate: SamplesPerSecond ) -> Phase {
         (self.phase + (frequency / sample_rate)) % 1.0
     }
 }
@@ -160,6 +156,10 @@ impl MonoSynth {
             sustain: 0.0,
             release: 0,
             cutoff: 0.0,
+            frequency_modulation: false,
+            fm_frequency: 30000.0,
+            fm_depth: 0.1,
+            fm_phasor: Phasor { phase: 0.0 }
         }
     }
 
@@ -209,19 +209,43 @@ impl MonoSynth {
     }
 
     #[export]
+    fn frequency_modulation(&mut self, _owner: &Node, frequency_modulation: bool) {
+        self.frequency_modulation = frequency_modulation
+    }
+
+    #[export]
+    fn fm_frequency(&mut self, _owner: &Node, fm_frequency: f32) {
+        self.fm_frequency = fm_frequency
+    }
+
+    #[export]
+    fn fm_depth(&mut self, _owner: &Node, fm_depth: f32) {
+        self.fm_depth = fm_depth
+    }
+
+    #[export]
     pub fn frames(&mut self, _owner: &Node, samples: i32) -> TypedArray<Vector2> {
         let mut frames = TypedArray::new();
 
         for _i in 0..samples {
             let sample = Osc::generate_sample(&self.waveform, self.phasor.phase);
-            frames.push(Vector2::new(sample, sample));
+            let next_phase : f32;
 
-            let next_phase = self.phasor.next_phase(self.frequency, self.sample_rate);
+            if self.frequency_modulation {
+                let modulation_value = Osc::generate_sample(&Waveform::Sine, self.fm_phasor.phase) * self.fm_depth;
+                self.fm_phasor.phase = self.fm_phasor.next_phase(self.fm_frequency, self.sample_rate);
+                next_phase = self.phasor.next_phase(self.frequency * modulation_value, self.sample_rate);
+            } else {
+                next_phase = self.phasor.next_phase(self.frequency, self.sample_rate);
+            }
+
             if self.apply_bend {
                 self.phasor.phase = Bender::bend(next_phase, self.phasor_bend);
             } else {
                 self.phasor.phase = next_phase;
             }
+
+            frames.push(Vector2::new(sample, sample));
         }
 
         return frames
