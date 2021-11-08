@@ -20,8 +20,8 @@ export(float, 20, 8000, 5) var cutoff = 6000
 
 # Frequency Modulation
 export(bool) var frequency_modulation = false
-export(float, 0.0, 100.0, 0.1) var fm_frequency = 1.0
-export(float, 0.0, 10.0, 0.1) var fm_amplitude = 0.1
+export(float, 0.0, 50.0, 0.1) var fm_multiplier = 1.0
+export(float, 0.0, 1000.0, 1.0) var fm_index = 1.0
 
 # load the GDNative script connected to the rust lib
 var MonoSynth = preload("res://MonoSynth.gdns")
@@ -57,8 +57,8 @@ func _process(_delta):
 		synth.frequency(freq) 
 		synth.phasor_bend(phasor_bend)
 		synth.frequency_modulation(frequency_modulation)
-		synth.fm_frequency(fm_frequency)
-		synth.fm_depth(fm_amplitude)
+		synth.fm_frequency(fm_multiplier * freq)
+		synth.fm_depth(fm_index)
 		_check_waveform()
 		_fill_buffer()
 
@@ -81,3 +81,4 @@ func _input(event):
 		freq = event.position.x
 #		phasor_bend.x = event.position.x / 1024
 #		phasor_bend.y = event.position.y / 600
+		fm_multiplier = 600 / (event.position.y + 1)

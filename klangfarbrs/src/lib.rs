@@ -157,7 +157,7 @@ impl MonoSynth {
             release: 0,
             cutoff: 0.0,
             frequency_modulation: false,
-            fm_frequency: 30000.0,
+            fm_frequency: 10.0,
             fm_depth: 0.1,
             fm_phasor: Phasor { phase: 0.0 }
         }
@@ -234,7 +234,7 @@ impl MonoSynth {
             if self.frequency_modulation {
                 let modulation_value = Osc::generate_sample(&Waveform::Sine, self.fm_phasor.phase) * self.fm_depth;
                 self.fm_phasor.phase = self.fm_phasor.next_phase(self.fm_frequency, self.sample_rate);
-                next_phase = self.phasor.next_phase(self.frequency * modulation_value, self.sample_rate);
+                next_phase = self.phasor.next_phase(self.frequency + modulation_value, self.sample_rate);
             } else {
                 next_phase = self.phasor.next_phase(self.frequency, self.sample_rate);
             }
