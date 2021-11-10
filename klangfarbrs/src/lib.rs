@@ -15,6 +15,8 @@ use gdnative::core_types::TypedArray;
 mod osc;
 use osc::{Osc};
 
+mod adsr;
+
 /// Aliasing some types to distinguish various audio properties.
 type Sample = f32;
 type SamplesPerSecond = f32;
