@@ -1,10 +1,12 @@
-//! # Rust audio oscillator for the Godot game engine
+//! # Rust Synthesizer for the Godot game engine
 //!
 //! This crate contains logic for generating samples for audio wave forms which are then
 //! used to fill Godot's `AudioStreamPlayback` buffers. Scripts using this code as a dynamic
 //! library will be able to request a certain number of frames (represented as a `Vector2`)
-//! at a specific frequency. Because of how the Godot bindings work, the wave structs will
-//! have a default sample rate at 48kHz. You'll want to set it in your script's `_ready`
+//! generated with the current synthesis parameter settings.
+//!
+//! Because of how the Godot bindings work, the Synth will have a default
+//! sample rate at 48kHz. You'll want to set it in your script's `_ready`
 //! function to match the sample rate in Godot.
 
 use gdnative::prelude::*;
@@ -120,25 +122,14 @@ impl Bender {
     }
 }
 
-/// # Examples
-///
-/// It is more work than benefit to figure out how to instantiate a Godot object (Node)
-/// that does not behave as typical Rust. However, I wanted to try out the feature of
-/// examples in the documentation that run as automated tests. :galaxy-brain:
-///
-/// ```
-/// use klangfarbrs::Osc;
-/// let mut wave = Osc { sample_rate: 24000.0, phase: 0.0 };
-/// assert_eq!(wave.sample_rate, 24000.0);
-/// ```
 #[methods]
 impl MonoSynth {
     /// # Examples
     ///
     /// ```gdscript
     /// var MonoSynth = preload("res://MonoSynth.gdns")
-    /// var wave = MonoSynth.new()
-    /// wave.set_sample_rate(24000.0)
+    /// var synth = MonoSynth.new()
+    /// synth.set_sample_rate(24000.0)
     /// wave.square() # changes to a square wave
     /// ```
     pub fn new(_owner: &Node) -> Self {
