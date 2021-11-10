@@ -7,7 +7,7 @@ pub struct Envelope {
 }
 
 impl Envelope {
-    fn new(attack: Millisecond, decay: Millisecond, sustain: Amplitude, release: Millisecond) -> Self {
+    pub fn new(attack: Millisecond, decay: Millisecond, sustain: Amplitude, release: Millisecond) -> Self {
         let attack = vec![sustain; attack as usize];
         let decay = vec![sustain; decay as usize];
         let release = vec![sustain; release as usize];

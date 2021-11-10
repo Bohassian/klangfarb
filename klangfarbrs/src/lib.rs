@@ -13,9 +13,10 @@ use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
 
 mod osc;
-use osc::{Osc};
+use osc::Osc;
 
-mod adsr;
+pub mod adsr;
+use adsr::Envelope;
 
 /// Aliasing some types to distinguish various audio properties.
 type Sample = f32;
@@ -182,6 +183,13 @@ impl MonoSynth {
     #[export]
     fn fm_depth(&mut self, _owner: &Node, fm_depth: f32) {
         self.fm_depth = fm_depth
+    }
+
+    fn envelope(
+        &self, _owner: &Node,
+        attack: Millisecond, decay: Millisecond, sustain: Amplitude, release: Millisecond
+    ) -> Envelope {
+        Envelope::new(attack, decay, sustain, release)
     }
 
     #[export]
