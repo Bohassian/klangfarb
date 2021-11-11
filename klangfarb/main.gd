@@ -1,7 +1,7 @@
 extends AudioStreamPlayer
 
 # control wave form
-export(String, "sine", "square", "triangle", "sawtooth") var waveform = "sine"
+export(String, "sine", "square", "triangle", "sawtooth", "white_noise", "brown_noise") var waveform = "sine"
 # controllable frequency interface
 export(float, 20, 8000, 5) var freq = 440.0
 # bending the waveform
@@ -50,6 +50,10 @@ func _check_waveform():
 		synth.triangle()
 	elif waveform == "sawtooth":
 		synth.sawtooth()
+	elif waveform == "white_noise":
+		synth.white_noise()
+	elif waveform == "brown_noise":
+		synth.brown_noise()
 
 func _process(_delta):
 	if self.is_playing():

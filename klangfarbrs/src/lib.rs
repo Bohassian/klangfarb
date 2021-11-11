@@ -11,6 +11,8 @@
 
 use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
+use rand::Rng;
+use std::f32::consts::TAU;
 
 mod osc;
 use osc::Osc;
@@ -32,7 +34,8 @@ pub enum Waveform {
     Square,
     Triangle,
     Sawtooth,
-    // Noise,
+    WhiteNoise,
+    BrownNoise,
 }
 
 #[derive(NativeClass)]
@@ -116,6 +119,7 @@ impl MonoSynth {
             frequency_modulation: false,
             fm_frequency: 10.0,
             fm_depth: 0.1,
+    // Noise,
             fm_phasor: Phasor { phase: 0.0 },
             current_envelope_position: 0,
         }
@@ -144,6 +148,16 @@ impl MonoSynth {
     #[export]
     fn sawtooth(&mut self, _owner: &Node) {
         self.waveform = Waveform::Sawtooth
+    }
+
+    #[export]
+    fn white_noise(&mut self, _owner: &Node) {
+        self.waveform = Waveform::WhiteNoise
+    }
+
+    #[export]
+    fn brown_noise(&mut self, _owner: &Node) {
+        self.waveform = Waveform::BrownNoise
     }
 
     #[export]
@@ -197,13 +211,16 @@ impl MonoSynth {
     #[export]
     pub fn frames(&mut self, _owner: &Node, samples: i32) -> TypedArray<Vector2> {
         let mut frames = TypedArray::new();
+        let mut rng = rand::thread_rng();
+        let mut last_value = (rng.gen::<f32>() * TAU).sin();
 
         for _i in 0..samples {
-            let mut sample = Osc::generate_sample(&self.waveform, self.phasor.phase);
+            let mut sample = Osc::generate_sample(&self.waveform, self.phasor.phase, last_value);
+            last_value = sample;
             let next_phase : f32;
 
             if self.frequency_modulation {
-                let modulation_value = Osc::generate_sample(&Waveform::Sine, self.fm_phasor.phase) * self.fm_depth;
+                let modulation_value = Osc::generate_sample(&Waveform::Sine, self.fm_phasor.phase, last_value) * self.fm_depth;
                 self.fm_phasor.phase = self.fm_phasor.next_phase(self.fm_frequency, self.sample_rate);
                 next_phase = self.phasor.next_phase(self.frequency + modulation_value, self.sample_rate);
             } else {

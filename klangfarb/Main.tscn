@@ -8,3 +8,5 @@
 stream = SubResource( 1 )
 volume_db = -13.216
 script = ExtResource( 2 )
+frequency_modulation = true
+fm_index = 100.0

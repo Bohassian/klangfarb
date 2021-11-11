@@ -11,3 +11,4 @@ name = "klangfarbrs"
 
 [dependencies]
 gdnative = "0.9"
+rand = "0.8.4"
