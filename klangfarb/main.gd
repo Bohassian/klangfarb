@@ -59,6 +59,7 @@ func _process(_delta):
 		synth.frequency_modulation(frequency_modulation)
 		synth.fm_frequency(fm_multiplier * freq)
 		synth.fm_depth(fm_index)
+		synth.continuous(continuous)
 		_check_waveform()
 		_fill_buffer()
 

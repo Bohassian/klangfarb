@@ -47,10 +47,7 @@ pub struct MonoSynth {
     pub continuous: bool,
     pub duration: Millisecond,
     // ADSR amplifier
-    pub attack: Millisecond,
-    pub decay: Millisecond,
-    pub sustain: Amplitude,
-    pub release: Millisecond,
+    envelope: Envelope,
     // filter
     pub cutoff: Hz,
     // pub resonance:
@@ -59,6 +56,7 @@ pub struct MonoSynth {
     pub fm_frequency: Hz,
     pub fm_depth: Amplitude,
     fm_phasor: Phasor,
+    current_envelope_position: usize,
 }
 
 pub struct Phasor {
@@ -113,15 +111,13 @@ impl MonoSynth {
             phasor_bend: Vector2::new(0.0, 0.0),
             continuous: true,
             duration: 0,
-            attack: 0,
-            decay: 0,
-            sustain: 0.0,
-            release: 0,
+            envelope: Envelope::new(500, 1000, 0.5, 4000, 48000.0),
             cutoff: 0.0,
             frequency_modulation: false,
             fm_frequency: 10.0,
             fm_depth: 0.1,
-            fm_phasor: Phasor { phase: 0.0 }
+            fm_phasor: Phasor { phase: 0.0 },
+            current_envelope_position: 0,
         }
     }
 
@@ -156,6 +152,11 @@ impl MonoSynth {
     }
 
     #[export]
+    fn continuous(&mut self, _owner: &Node, state: bool) {
+        self.continuous = state;
+    }
+
+    #[export]
     fn phasor_bend(&mut self, _owner: &Node, phasor_bend: Vector2) {
         self.phasor_bend = phasor_bend
     }
@@ -185,11 +186,12 @@ impl MonoSynth {
         self.fm_depth = fm_depth
     }
 
+    #[export]
     fn envelope(
-        &self, _owner: &Node,
+        &mut self, _owner: &Node,
         attack: Millisecond, decay: Millisecond, sustain: Amplitude, release: Millisecond
-    ) -> Envelope {
-        Envelope::new(attack, decay, sustain, release)
+    ) {
+        self.envelope = Envelope::new(attack, decay, sustain, release, self.sample_rate);
     }
 
     #[export]
@@ -197,7 +199,7 @@ impl MonoSynth {
         let mut frames = TypedArray::new();
 
         for _i in 0..samples {
-            let sample = Osc::generate_sample(&self.waveform, self.phasor.phase);
+            let mut sample = Osc::generate_sample(&self.waveform, self.phasor.phase);
             let next_phase : f32;
 
             if self.frequency_modulation {
@@ -212,6 +214,26 @@ impl MonoSynth {
                 self.phasor.phase = Bender::bend(next_phase, self.phasor_bend);
             } else {
                 self.phasor.phase = next_phase;
+            }
+
+            if !self.continuous {
+                let pos = self.current_envelope_position;
+                let atk = self.envelope.attack.len();
+                let atkdcy = atk + self.envelope.decay.len();
+
+                if pos < atk {
+                    sample = sample * self.envelope.attack[pos]
+                } else if pos >= atk && pos < atkdcy  {
+                    sample = sample * self.envelope.decay[pos - atk]
+                } else if pos < self.envelope.len() {
+                    sample = sample * self.envelope.release[pos - atkdcy]
+                }
+
+                self.current_envelope_position += 1;
+
+                if self.current_envelope_position >= self.envelope.len() {
+                    self.current_envelope_position = 0;
+                }
             }
 
             frames.push(Vector2::new(sample, sample));
