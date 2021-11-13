@@ -14,6 +14,8 @@ use gdnative::core_types::TypedArray;
 use rand::Rng;
 use std::f32::consts::TAU;
 
+mod phasor;
+
 mod osc;
 use osc::Osc;
 
