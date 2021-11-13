@@ -11,13 +11,12 @@
 
 use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
-use rand::Rng;
-use std::f32::consts::TAU;
 
 mod phasor;
+use phasor::{Phase};
 
 mod osc;
-use osc::Osc;
+use osc::{Osc, Waveform};
 
 pub mod adsr;
 use adsr::Envelope;
@@ -26,25 +25,13 @@ use adsr::Envelope;
 type Sample = f32;
 type SamplesPerSecond = f32;
 type Hz = f32;
-type Phase = f32;
 type Amplitude = f32;
 type Millisecond = u32;
-
-/// The various waveforms the `MonoSynth` can generate.
-pub enum Waveform {
-    Sine,
-    Square,
-    Triangle,
-    Sawtooth,
-    WhiteNoise,
-    BrownNoise,
-}
 
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct MonoSynth {
-    pub phasor: Phasor,
-    pub waveform: Waveform,
+    pub osc: Osc,
     pub sample_rate: SamplesPerSecond,
     pub frequency: Hz,
     pub apply_bend: bool,
@@ -60,22 +47,8 @@ pub struct MonoSynth {
     pub frequency_modulation: bool,
     pub fm_frequency: Hz,
     pub fm_depth: Amplitude,
-    fm_phasor: Phasor,
+    fm_osc: Osc,
     current_envelope_position: usize,
-}
-
-pub struct Phasor {
-    pub phase: Phase,
-}
-
-impl Phasor {
-    /// Phase stays between 0.0 and 1.0 and represents position on the axis of time
-    /// for a given wave form. Since audio signals are periodic, we can just calculate
-    /// the first cycle of a wave repeatedly. This also prevents pitch drift caused by
-    /// floating point errors over time.
-    pub fn next_phase(&self, frequency: Hz, sample_rate: SamplesPerSecond ) -> Phase {
-        (self.phase + (frequency / sample_rate)) % 1.0
-    }
 }
 
 pub struct Bender {}
@@ -107,22 +80,23 @@ impl MonoSynth {
     /// wave.square() # changes to a square wave
     /// ```
     pub fn new(_owner: &Node) -> Self {
+        let freq = 440.0;
+        let sprt = 48000.0;
+
         Self {
-            phasor: Phasor { phase: 0.0 },
-            waveform: Waveform::Sine,
-            sample_rate: 48000.0,
-            frequency: 440.0,
+            osc: Osc::new(freq, sprt),
+            sample_rate: sprt,
+            frequency: freq,
             apply_bend: false,
             phasor_bend: Vector2::new(0.0, 0.0),
             continuous: true,
             duration: 0,
-            envelope: Envelope::new(500, 1000, 0.5, 4000, 48000.0),
+            envelope: Envelope::new(500, 1000, 0.5, 4000, sprt),
             cutoff: 0.0,
             frequency_modulation: false,
             fm_frequency: 10.0,
             fm_depth: 0.1,
-    // Noise,
-            fm_phasor: Phasor { phase: 0.0 },
+            fm_osc: Osc::new(10.0, sprt),
             current_envelope_position: 0,
         }
     }
@@ -134,37 +108,37 @@ impl MonoSynth {
 
     #[export]
     fn sine(&mut self, _owner: &Node) {
-        self.waveform = Waveform::Sine
+        self.osc.waveform = Waveform::Sine
     }
 
     #[export]
     fn square(&mut self, _owner: &Node) {
-        self.waveform = Waveform::Square
+        self.osc.waveform = Waveform::Square
     }
 
     #[export]
     fn triangle(&mut self, _owner: &Node) {
-        self.waveform = Waveform::Triangle
+        self.osc.waveform = Waveform::Triangle
     }
 
     #[export]
     fn sawtooth(&mut self, _owner: &Node) {
-        self.waveform = Waveform::Sawtooth
+        self.osc.waveform = Waveform::Sawtooth
     }
 
     #[export]
     fn white_noise(&mut self, _owner: &Node) {
-        self.waveform = Waveform::WhiteNoise
+        self.osc.waveform = Waveform::WhiteNoise
     }
 
     #[export]
     fn brown_noise(&mut self, _owner: &Node) {
-        self.waveform = Waveform::BrownNoise
+        self.osc.waveform = Waveform::BrownNoise
     }
 
     #[export]
     fn frequency(&mut self, _owner: &Node, frequency: Hz) {
-        self.frequency = frequency
+        self.osc.set_frequency(frequency)
     }
 
     #[export]
@@ -194,7 +168,7 @@ impl MonoSynth {
 
     #[export]
     fn fm_frequency(&mut self, _owner: &Node, fm_frequency: f32) {
-        self.fm_frequency = fm_frequency
+        self.fm_osc.set_frequency(fm_frequency)
     }
 
     #[export]
@@ -213,27 +187,23 @@ impl MonoSynth {
     #[export]
     pub fn frames(&mut self, _owner: &Node, samples: i32) -> TypedArray<Vector2> {
         let mut frames = TypedArray::new();
-        let mut rng = rand::thread_rng();
-        let mut last_value = (rng.gen::<f32>() * TAU).sin();
 
         for _i in 0..samples {
-            let mut sample = Osc::generate_sample(&self.waveform, self.phasor.phase, last_value);
-            last_value = sample;
-            let next_phase : f32;
+            // let next_phase : f32;
 
             if self.frequency_modulation {
-                let modulation_value = Osc::generate_sample(&Waveform::Sine, self.fm_phasor.phase, last_value) * self.fm_depth;
-                self.fm_phasor.phase = self.fm_phasor.next_phase(self.fm_frequency, self.sample_rate);
-                next_phase = self.phasor.next_phase(self.frequency + modulation_value, self.sample_rate);
-            } else {
-                next_phase = self.phasor.next_phase(self.frequency, self.sample_rate);
+                let modulation_value =  self.fm_osc.next().unwrap() * self.fm_depth;
+                self.osc.set_frequency(self.osc.get_frequency() + modulation_value);
             }
 
-            if self.apply_bend {
-                self.phasor.phase = Bender::bend(next_phase, self.phasor_bend);
-            } else {
-                self.phasor.phase = next_phase;
-            }
+            let mut sample = self.osc.next().unwrap();
+            self.osc.last_value = sample;
+
+            // if self.apply_bend {
+            //     self.phasor.phase = Bender::bend(next_phase, self.phasor_bend);
+            // } else {
+            //     self.phasor.phase = next_phase;
+            // }
 
             if !self.continuous {
                 let pos = self.current_envelope_position;

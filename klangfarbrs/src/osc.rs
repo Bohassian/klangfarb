@@ -1,15 +1,50 @@
 use std::f32::consts::TAU;
 use rand::Rng;
-use crate::{Waveform, Phase, Sample};
+use super::{Hz, Sample};
+use super::phasor::{Phasor};
 
-pub struct Osc {}
+/// The various waveforms the `MonoSynth` can generate.
+pub enum Waveform {
+    Sine,
+    Square,
+    Triangle,
+    Sawtooth,
+    WhiteNoise,
+    BrownNoise,
+}
+
+pub struct Osc {
+    pub phasor: Phasor,
+    pub waveform: Waveform,
+    pub last_value: Sample,
+}
 
 impl Osc {
-    pub fn generate_sample(waveform: &Waveform, phase: Phase, last_value: Sample) -> Sample {
-        let phase = phase;
+    pub fn new(frequency: Hz, sample_rate: f32) -> Self {
+        Self {
+            phasor: Phasor::new(frequency, sample_rate),
+            waveform: Waveform::Sine,
+            last_value: 0.1,
+        }
+    }
+
+    pub fn get_frequency(&self) -> Hz {
+        self.phasor.frequency
+    }
+
+    pub fn set_frequency(&mut self, frequency: Hz) {
+        self.phasor.frequency = frequency;
+    }
+}
+
+impl Iterator for Osc {
+    type Item = Sample;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let phase = self.phasor.next().unwrap();
         let mut rng = rand::thread_rng();
 
-        match waveform {
+        let sample = match self.waveform {
             Waveform::Sine => {
                 (TAU * phase).sin()
             },
@@ -39,9 +74,11 @@ impl Osc {
             },
 
             Waveform::BrownNoise => {
-                (last_value + (rng.gen::<f32>()) * 0.2 - 0.1).clamp(-1.0, 1.0)
+                (self.last_value + (rng.gen::<f32>()) * 0.2 - 0.1).clamp(-1.0, 1.0)
             },
-        }
+        };
+
+        Some(sample)
     }
 }
 
