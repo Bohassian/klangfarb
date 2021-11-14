@@ -1,7 +1,7 @@
 use std::f32::consts::TAU;
 use rand::Rng;
 use super::{Hz, Sample};
-use super::phasor::{Phasor};
+use super::phasor::Phasor;
 
 /// The various waveforms the `MonoSynth` can generate.
 pub enum Waveform {
@@ -34,6 +34,13 @@ impl Osc {
 
     pub fn set_frequency(&mut self, frequency: Hz) {
         self.phasor.frequency = frequency;
+    }
+
+    pub fn sample(&mut self) -> Sample {
+        match self.next() {
+            Some(s) => { s },
+            None => 0.0
+        }
     }
 }
 

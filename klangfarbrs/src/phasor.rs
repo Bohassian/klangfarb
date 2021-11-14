@@ -46,3 +46,24 @@ mod tests {
         // assert_eq!([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.1], next)
     }
 }
+
+
+// TODO: fixup bender/modulator to allow phase modulation again
+// pub struct Bender {}
+
+// impl Bender {
+//     // for (i = 0; i < nframes; ++i) {
+//     //     if (in[i] < x0)
+//     //       out[i] = (y0/x0)*in[i];
+//     //     else
+//     //       out[i] = ((1-y0)/(1-x0)) * (in[i] - x0) + y0;
+//     //   }
+//     fn bend(phase: Phase, phasor_bend: Vector2) -> f32 {
+//         if phase < phasor_bend.x {
+//             (phasor_bend.y / phasor_bend.x) * phase
+//         } else {
+//             ((1.0 - phasor_bend.y) / (1.0 - phasor_bend.x)) * (phase - phasor_bend.x) + phasor_bend.y
+//         }
+//     }
+// }
+

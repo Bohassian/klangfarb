@@ -13,7 +13,6 @@ use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
 
 mod phasor;
-use phasor::{Phase};
 
 mod osc;
 use osc::{Osc, Waveform};
@@ -51,24 +50,6 @@ pub struct MonoSynth {
     current_envelope_position: usize,
 }
 
-pub struct Bender {}
-
-impl Bender {
-    // for (i = 0; i < nframes; ++i) {
-    //     if (in[i] < x0)
-    //       out[i] = (y0/x0)*in[i];
-    //     else
-    //       out[i] = ((1-y0)/(1-x0)) * (in[i] - x0) + y0;
-    //   }
-    fn bend(phase: Phase, phasor_bend: Vector2) -> f32 {
-        if phase < phasor_bend.x {
-            (phasor_bend.y / phasor_bend.x) * phase
-        } else {
-            ((1.0 - phasor_bend.y) / (1.0 - phasor_bend.x)) * (phase - phasor_bend.x) + phasor_bend.y
-        }
-    }
-}
-
 #[methods]
 impl MonoSynth {
     /// # Examples
@@ -96,7 +77,7 @@ impl MonoSynth {
             frequency_modulation: false,
             fm_frequency: 10.0,
             fm_depth: 0.1,
-            fm_osc: Osc::new(10.0, sprt),
+            fm_osc: Osc::new(freq * 2.0, sprt),
             current_envelope_position: 0,
         }
     }
@@ -138,6 +119,7 @@ impl MonoSynth {
 
     #[export]
     fn frequency(&mut self, _owner: &Node, frequency: Hz) {
+        self.frequency = frequency;
         self.osc.set_frequency(frequency)
     }
 
@@ -167,7 +149,7 @@ impl MonoSynth {
     }
 
     #[export]
-    fn fm_frequency(&mut self, _owner: &Node, fm_frequency: f32) {
+    fn fm_frequency(&mut self, _owner: &Node, fm_frequency: Hz) {
         self.fm_osc.set_frequency(fm_frequency)
     }
 
@@ -192,13 +174,14 @@ impl MonoSynth {
             // let next_phase : f32;
 
             if self.frequency_modulation {
-                let modulation_value =  self.fm_osc.next().unwrap() * self.fm_depth;
+                let modulation_value =  self.fm_osc.sample() * self.fm_depth;
                 self.osc.set_frequency(self.osc.get_frequency() + modulation_value);
             }
 
-            let mut sample = self.osc.next().unwrap();
+            let mut sample = self.osc.sample();
             self.osc.last_value = sample;
 
+            // TODO:
             // if self.apply_bend {
             //     self.phasor.phase = Bender::bend(next_phase, self.phasor_bend);
             // } else {
