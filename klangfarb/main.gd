@@ -57,19 +57,19 @@ func _check_waveform():
 
 func _process(_delta):
 	if self.is_playing():
-		synth.apply_bend(apply_bend)
-		synth.frequency(freq) 
-		synth.phasor_bend(phasor_bend)
+#		synth.apply_bend(apply_bend)
+#		synth.frequency(freq) 
+#		synth.phasor_bend(phasor_bend)
 		synth.frequency_modulation(frequency_modulation)
-		synth.fm_frequency(fm_multiplier * freq)
+#		synth.fm_frequency(fm_multiplier * freq)
 		synth.fm_depth(fm_index)
 		synth.continuous(continuous)
 		_check_waveform()
 		_fill_buffer()
 
 func _ready() -> void:
-	# buffer length of 100ms gives us ~realtime response to input changes
-	self.stream.buffer_length = 0.1
+	# buffer length of 10ms gives us ~realtime response to input changes
+	self.stream.buffer_length = 0.05
 	# ensure Godot/Sine have the same sample rate
 	synth.set_sample_rate(self.stream.mix_rate)
 	# get our AudioStreamPlayback object
@@ -80,10 +80,13 @@ func _ready() -> void:
 
 func _input(event):
 	# Mouse in viewport coordinates.
-	if event is InputEventMouseButton:
+	if event is InputEventMouseButton && event.is_pressed():
 		print("Mouse Click/Unclick at: ", event.position)
+		synth.trigger()
 	elif event is InputEventMouseMotion:
 		freq = event.position.x
+		synth.frequency(freq) 
 #		phasor_bend.x = event.position.x / 1024
 #		phasor_bend.y = event.position.y / 600
 		fm_multiplier = 600 / (event.position.y + 1)
+		synth.fm_frequency(fm_multiplier * freq)

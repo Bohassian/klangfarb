@@ -17,8 +17,8 @@ mod phasor;
 mod osc;
 use osc::{Osc, Waveform};
 
-pub mod adsr;
-use adsr::Envelope;
+pub mod envelope;
+use envelope::Envelope;
 
 /// Aliasing some types to distinguish various audio properties.
 type Sample = f32;
@@ -47,7 +47,6 @@ pub struct MonoSynth {
     pub fm_frequency: Hz,
     pub fm_depth: Amplitude,
     fm_osc: Osc,
-    current_envelope_position: usize,
 }
 
 #[methods]
@@ -72,13 +71,12 @@ impl MonoSynth {
             phasor_bend: Vector2::new(0.0, 0.0),
             continuous: true,
             duration: 0,
-            envelope: Envelope::new(500, 1000, 0.5, 4000, sprt),
+            envelope: Envelope::new(30, 500, 0.5, 1000, sprt),
             cutoff: 0.0,
             frequency_modulation: false,
             fm_frequency: 10.0,
             fm_depth: 0.1,
             fm_osc: Osc::new(freq * 2.0, sprt),
-            current_envelope_position: 0,
         }
     }
 
@@ -167,6 +165,11 @@ impl MonoSynth {
     }
 
     #[export]
+    fn trigger(&mut self, _owner: &Node) {
+        self.envelope.index = 0;
+    }
+
+    #[export]
     pub fn frames(&mut self, _owner: &Node, samples: i32) -> TypedArray<Vector2> {
         let mut frames = TypedArray::new();
 
@@ -189,22 +192,9 @@ impl MonoSynth {
             // }
 
             if !self.continuous {
-                let pos = self.current_envelope_position;
-                let atk = self.envelope.attack.len();
-                let atkdcy = atk + self.envelope.decay.len();
-
-                if pos < atk {
-                    sample = sample * self.envelope.attack[pos]
-                } else if pos >= atk && pos < atkdcy  {
-                    sample = sample * self.envelope.decay[pos - atk]
-                } else if pos < self.envelope.len() {
-                    sample = sample * self.envelope.release[pos - atkdcy]
-                }
-
-                self.current_envelope_position += 1;
-
-                if self.current_envelope_position >= self.envelope.len() {
-                    self.current_envelope_position = 0;
+                sample *= match self.envelope.next() {
+                    Some(a) => a,
+                    None => 0.0,
                 }
             }
 

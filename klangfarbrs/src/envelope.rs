@@ -4,6 +4,7 @@ pub struct Envelope {
     pub attack: Vec<Amplitude>,
     pub decay: Vec<Amplitude>,
     pub release: Vec<Amplitude>,
+    pub index: usize,
 }
 
 impl Envelope {
@@ -14,11 +15,37 @@ impl Envelope {
         let decay = interpolate(1.0, sustain, ms_to_samples(decay, sample_rate));
         let release = interpolate(sustain, 0.0, ms_to_samples(release, sample_rate));
 
-        Self{attack, decay, release}
+        Self { attack, decay, release, index: 0 }
     }
 
     pub fn len(&self) -> usize {
         self.attack.len() + self.decay.len() + self.release.len()
+    }
+}
+
+impl Iterator for Envelope {
+    type Item = Amplitude;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let idx = self.index;
+        let atk = self.attack.len();
+        let atkdcy = atk + self.decay.len();
+
+        self.index += 1;
+
+        if idx < self.len() {
+            let val = if idx < atk {
+                self.attack[idx]
+            } else if idx >= atk && idx < atkdcy  {
+                self.decay[idx - atk]
+            } else {
+                self.release[idx - atkdcy]
+            };
+
+            Some(val)
+        } else {
+            None
+        }
     }
 }
 
