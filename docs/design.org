@@ -25,20 +25,25 @@ by Godot.
 - *Continuous* - whether or not to produce a continuous tone or use ADSR envelope
 - *Waveform* - a selection of basic waveforms will be implemented in Rust. We can
   control which one is being generated via a switch in Godot.
-- *Phasor* - the shape of the waveform can be dynamically modified by changing the
-  shape of the phasor driving the oscillator. Given an (x,y) vector, the shape of
-  the phasor can be "bent" away from it smooth 0-1 slope.
-- *Amplitude Envelope* - this controls the volume of sound over time. Typical envelopes
+- *Envelope* - this controls the volume of sound over time. Typical envelopes
   have parameters for:
   - *Attack* - amount of time before the waveform is at its peak
   - *Decay* - amount of time it takes to go from peak to sustained level
   - *Sustain* - the level (amplitude) to sustain while a note is held
   - *Release* - the amount of time to go to 0 from sustain when note is released
+- *Frequency Modulator* - an oscillator that modulates the main tone generator which
+  has the effect of producing more complex sounds with sidebands of the main signal.
+  It has two controllable parameters:
+  - *Frequency multiple* integers create harmonic sidebands while non-integers make
+    inharmonic tones similar to a bell or metallic sound.
+  - *FM Depth* the amount of modulation to apply. Increasing by a lot can make some
+    interesting effects
+
+Not implemented (yet):
+
 - *Filter* - a low pass filter with a two parameters:
   - *Cutoff* the frequency where the filter begins
   - *Resonance* ? i think its like an amplitude boost at the cutoff?
-- *Modulator* - a low frequency oscillator that can effect the frequency or filter cutoff
-
 
 *** Output
 
@@ -47,4 +52,30 @@ a float between -1.0 and 1.0. You can request a certain number of frames, and ge
 the calculated samples to fill them. We can think of this as essentially the stereo
 audio jack from a synthesizer.
   
+* Signal Generator Model
 
+In Puredata, one of the key abstractions is the Signal object, which all of the
+audio specific related bits implement. Signals abstract away time, and you can build
+an audio pipleine by connecting them together. A phasor drives an oscillator which
+sends its signal through a line amplitude signal to shape its volume.
+
+                          [[file:diagrams/pd-phasor-oscillator.png]]
+
+This is roughly what we've built with Rust as iterators. Each ~.next()~ is like a
+tick of the =phasor~= object. =cos~= calculates the cosine value like our the
+~impl Iterator for Osc~ does in its ~.next()~ function.
+
+=line~=, when triggered by an input, produces a ramp from 0 to 1 over 1000 ms.
+It also "ticks" at the same rate as the other signals (the underlying sample rate).
+Each sample value from the cosine is multiplied by the values from the line signal.
+At the end of the 1000ms, the =*~= object is now constantly at the max amplitude.
+
+** Iterator as Signal ?
+
+Assuming we're calling ~next()~ on each part of our signal chain in the same cycle,
+at the same rate, we can utilize Rust's =Iterator= trait as our version of the Signal.
+
+This is how its working now. It is possible this will only get us so far, but
+I think we can roll with it. The currently implemented [[../klangfarbrs/src/envelope.rs][Envelope]] module is actually
+wrapping three of the =line~= type objects. ~attack~ ~decay~ and ~release~ could
+all be described by a ~Line~ struct that has a target amplitude and a duration.
