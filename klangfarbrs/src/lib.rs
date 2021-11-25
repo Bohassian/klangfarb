@@ -13,6 +13,8 @@ use gdnative::prelude::*;
 use gdnative::core_types::TypedArray;
 
 mod phasor;
+mod line;
+use line::Line;
 
 mod osc;
 use osc::{Osc, Waveform};
@@ -46,6 +48,10 @@ pub struct MonoSynth {
     pub frequency_modulation: bool,
     pub fm_frequency: Hz,
     pub fm_depth: Amplitude,
+    pub attack: Millisecond,
+    pub decay: Millisecond,
+    pub sustain: Amplitude,
+    pub release: Millisecond,
     fm_osc: Osc,
 }
 
@@ -77,6 +83,10 @@ impl MonoSynth {
             fm_frequency: 10.0,
             fm_depth: 0.1,
             fm_osc: Osc::new(freq * 2.0, sprt),
+            attack: 10,
+            decay: 100,
+            sustain: 0.5,
+            release: 500,
         }
     }
 
@@ -157,6 +167,26 @@ impl MonoSynth {
     }
 
     #[export]
+    fn set_attack(&mut self, _owner: &Node, attack: Millisecond) {
+        self.attack = attack
+    }
+
+    #[export]
+    fn set_decay(&mut self, _owner: &Node, decay: Millisecond) {
+        self.decay = decay
+    }
+
+    #[export]
+    fn set_sustain(&mut self, _owner: &Node, sustain: Amplitude) {
+        self.sustain = sustain
+    }
+
+    #[export]
+    fn set_release(&mut self, _owner: &Node, release: Millisecond) {
+        self.release = release
+    }
+
+    #[export]
     fn envelope(
         &mut self, _owner: &Node,
         attack: Millisecond, decay: Millisecond, sustain: Amplitude, release: Millisecond
@@ -165,8 +195,9 @@ impl MonoSynth {
     }
 
     #[export]
-    fn trigger(&mut self, _owner: &Node) {
-        self.envelope.index = 0;
+    fn trigger(&mut self, _owner: &Node,    
+    ) {
+        self.envelope = Envelope::new(self.attack, self.decay, self.sustain, self.release, self.sample_rate);
     }
 
     #[export]
