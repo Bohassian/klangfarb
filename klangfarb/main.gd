@@ -41,19 +41,19 @@ func _fill_buffer() -> void:
 		# playback stream buffer
 		playback.push_buffer(synth.frames(to_fill))
 
-func _check_waveform():
-	if waveform == "square":
-		synth.square()
-	elif waveform == "sine":
-		synth.sine()
-	elif waveform == "triangle":
-		synth.triangle()
-	elif waveform == "sawtooth":
-		synth.sawtooth()
-	elif waveform == "white_noise":
-		synth.white_noise()
-	elif waveform == "brown_noise":
-		synth.brown_noise()
+#func _check_waveform():
+	#if waveform == "square":
+		#synth.square()
+	#elif waveform == "sine":
+		#synth.sine()
+	#elif waveform == "triangle":
+		#synth.triangle()
+	#elif waveform == "sawtooth":
+		#synth.sawtooth()
+	#elif waveform == "white_noise":
+		#synth.white_noise()
+	#elif waveform == "brown_noise":
+		#synth.brown_noise()
 
 func _process(_delta):
 	if self.is_playing():
@@ -68,7 +68,7 @@ func _process(_delta):
 		synth.set_decay(decay)
 		synth.set_sustain(sustain)
 		synth.set_release(release)
-		_check_waveform()
+		# _check_waveform()
 		_fill_buffer()
 
 func _ready() -> void:
@@ -79,7 +79,7 @@ func _ready() -> void:
 	# get our AudioStreamPlayback object
 	playback = self.get_stream_playback()
 	# prefill the stream's sample buffer (which feeds DAC)
-	_check_waveform()
+	#_check_waveform()
 	_fill_buffer()
 
 func _input(event):
@@ -89,7 +89,7 @@ func _input(event):
 		synth.trigger()
 	elif event is InputEventMouseMotion:
 		freq = event.position.x
-		synth.frequency(freq) 
+	#	synth.frequency(freq) 
 #		phasor_bend.x = event.position.x / 1024
 #		phasor_bend.y = event.position.y / 600
 		fm_multiplier = 600 / (event.position.y + 1)

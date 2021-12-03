@@ -37,7 +37,7 @@ type Millisecond = u32;
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct MonoSynth {
-    pub osc: Instrument,
+    pub instrument: Instrument,
     pub sample_rate: SamplesPerSecond,
     pub frequency: Hz,
     pub apply_bend: bool,
@@ -75,7 +75,7 @@ impl MonoSynth {
         let sprt = 48000.0;
 
         Self {
-            osc: Osc::new(freq, sprt),
+            instrument: Instrument{osc_bank: vec![Osc::new(freq, sprt), Osc::new(400.0, sprt)], envelope: Envelope::new(30, 500, 0.5, 1000, sprt)},
             sample_rate: sprt,
             frequency: freq,
             apply_bend: false,
@@ -100,41 +100,41 @@ impl MonoSynth {
         godot_print!("DAS IST KLANGFARBRS.")
     }
 
-    #[export]
-    fn sine(&mut self, _owner: &Node) {
-        self.osc.waveform = Waveform::Sine
-    }
+    // #[export]
+    // fn sine(&mut self, _owner: &Node) {
+    //     self.osc.waveform = Waveform::Sine
+    // }
 
-    #[export]
-    fn square(&mut self, _owner: &Node) {
-        self.osc.waveform = Waveform::Square
-    }
+    // #[export]
+    // fn square(&mut self, _owner: &Node) {
+    //     self.osc.waveform = Waveform::Square
+    // }
 
-    #[export]
-    fn triangle(&mut self, _owner: &Node) {
-        self.osc.waveform = Waveform::Triangle
-    }
+    // #[export]
+    // fn triangle(&mut self, _owner: &Node) {
+    //     self.osc.waveform = Waveform::Triangle
+    // }
 
-    #[export]
-    fn sawtooth(&mut self, _owner: &Node) {
-        self.osc.waveform = Waveform::Sawtooth
-    }
+    // #[export]
+    // fn sawtooth(&mut self, _owner: &Node) {
+    //     self.osc.waveform = Waveform::Sawtooth
+    // }
 
-    #[export]
-    fn white_noise(&mut self, _owner: &Node) {
-        self.osc.waveform = Waveform::WhiteNoise
-    }
+    // #[export]
+    // fn white_noise(&mut self, _owner: &Node) {
+    //     self.osc.waveform = Waveform::WhiteNoise
+    // }
 
-    #[export]
-    fn brown_noise(&mut self, _owner: &Node) {
-        self.osc.waveform = Waveform::BrownNoise
-    }
+    // #[export]
+    // fn brown_noise(&mut self, _owner: &Node) {
+    //     self.osc.waveform = Waveform::BrownNoise
+    // }
 
-    #[export]
-    fn frequency(&mut self, _owner: &Node, frequency: Hz) {
-        self.frequency = frequency;
-        self.osc.set_frequency(frequency)
-    }
+    // #[export]
+    // fn frequency(&mut self, _owner: &Node, frequency: Hz) {
+    //     self.frequency = frequency;
+    //     self.osc.set_frequency(frequency)
+    // }
 
     #[export]
     fn continuous(&mut self, _owner: &Node, state: bool) {
@@ -202,7 +202,7 @@ impl MonoSynth {
     #[export]
     fn trigger(&mut self, _owner: &Node,
     ) {
-        self.envelope = Envelope::new(self.attack, self.decay, self.sustain, self.release, self.sample_rate);
+        self.instrument.envelope = Envelope::new(self.attack, self.decay, self.sustain, self.release, self.sample_rate);
     }
 
     #[export]
@@ -212,13 +212,13 @@ impl MonoSynth {
         for _i in 0..samples {
             // let next_phase : f32;
 
-            if self.frequency_modulation {
-                let modulation_value =  self.fm_osc.sample() * self.fm_depth;
-                self.osc.set_frequency(self.osc.get_frequency() + modulation_value);
-            }
+            // if self.frequency_modulation {
+            //     let modulation_value =  self.fm_osc.sample() * self.fm_depth;
+            //     self.osc.set_frequency(self.osc.get_frequency() + modulation_value);
+            // }
 
-            let mut sample = self.osc.sample();
-            self.osc.last_value = sample;
+            let mut sample = self.instrument.sample();
+            // self.osc.last_value = sample;
 
             // TODO:
             // if self.apply_bend {

@@ -1,8 +1,8 @@
 use super::{ Osc, Envelope, Sample };
 
-struct Instrument {
-    osc_bank: Vec<Osc>,
-    envelope: Envelope,
+pub struct Instrument {
+    pub osc_bank: Vec<Osc>,
+    pub envelope: Envelope,
 }
 
 impl Instrument {
