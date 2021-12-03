@@ -23,6 +23,7 @@ pub mod envelope;
 use envelope::Envelope;
 
 mod instrument;
+use instrument::Instrument;
 
 mod utils;
 
@@ -36,7 +37,7 @@ type Millisecond = u32;
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct MonoSynth {
-    pub osc: Osc,
+    pub osc: Instrument,
     pub sample_rate: SamplesPerSecond,
     pub frequency: Hz,
     pub apply_bend: bool,
@@ -199,7 +200,7 @@ impl MonoSynth {
     }
 
     #[export]
-    fn trigger(&mut self, _owner: &Node,    
+    fn trigger(&mut self, _owner: &Node,
     ) {
         self.envelope = Envelope::new(self.attack, self.decay, self.sustain, self.release, self.sample_rate);
     }

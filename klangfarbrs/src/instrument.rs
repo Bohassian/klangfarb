@@ -5,6 +5,15 @@ struct Instrument {
     envelope: Envelope,
 }
 
+impl Instrument {
+    pub fn sample(&mut self) -> Sample {
+        match self.next() {
+            Some(s) => { s },
+            None => 0.0
+        }
+    }
+}
+
 impl Iterator for Instrument {
     type Item = Sample;
 
