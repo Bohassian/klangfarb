@@ -22,6 +22,8 @@ use osc::{Osc, Waveform};
 pub mod envelope;
 use envelope::Envelope;
 
+mod utils;
+
 /// Aliasing some types to distinguish various audio properties.
 type Sample = f32;
 type SamplesPerSecond = f32;

@@ -39,11 +39,10 @@ mod tests {
     }
 
     #[test]
-    fn it_produces_expected_next_values() {
+    fn it_wraps_around_as_expected() {
         let phasor = Phasor::new(10.0, 100.0);
-        let taken_iterator  = phasor.take(11);
-        assert_eq!(taken_iterator.last(), Some(0.1))
-        // assert_eq!([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.1], next)
+        let last_val = phasor.take(11).last().unwrap();
+        assert_eq!(last_val.floor(), 0.0)
     }
 }
 
