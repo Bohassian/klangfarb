@@ -79,3 +79,14 @@ This is how its working now. It is possible this will only get us so far, but
 I think we can roll with it. The currently implemented [[../klangfarbrs/src/envelope.rs][Envelope]] module is actually
 wrapping three of the =line~= type objects. ~attack~ ~decay~ and ~release~ could
 all be described by a ~Line~ struct that has a target amplitude and a duration.
+
+* Instrument (basic)
+
+An Instrument is N Sine(?) waves with an Envelope applied to it.
+
+(OscBank, Envelope)
+
+it implements Iterator so that ~next()~ sums the oscillators,
+scales them down by 1/N, and multiplies by the Envelope value.
+
+

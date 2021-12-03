@@ -22,6 +22,8 @@ use osc::{Osc, Waveform};
 pub mod envelope;
 use envelope::Envelope;
 
+mod instrument;
+
 mod utils;
 
 /// Aliasing some types to distinguish various audio properties.
