@@ -215,6 +215,7 @@ impl MonoSynth {
     #[export]
     fn trigger(&mut self, _owner: &Node,
     ) {
+        self.instrument = Instrument::new(self.frequency, vec![0.56, 0.92, 1.19, 1.7, 2.0, 2.74, 3.0, 3.76, 4.07], self.sample_rate);
         self.envelope = Envelope::new(self.attack, self.decay, self.sustain, self.release, self.sample_rate);
     }
 
@@ -248,11 +249,6 @@ impl MonoSynth {
                     Some(a) => a,
                     None => 0.0,
                 }
-            }
-
-            // TODO: For now this enables the instrument to be played multiple times. Would like to find a cleaner way to do this.
-            if self.instrument.complete {
-                self.instrument = Instrument::new(self.frequency, vec![0.56, 0.92, 1.19, 1.7, 2.0, 2.74, 3.0, 3.76, 4.07], self.sample_rate)
             }
 
             frames.push(Vector2::new(sample, sample));

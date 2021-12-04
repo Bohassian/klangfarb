@@ -10,4 +10,6 @@ volume_db = -13.216
 script = ExtResource( 2 )
 play_instrument = true
 continuous = false
+decay = 1000
+release = 500
 fm_index = 100.0

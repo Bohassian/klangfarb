@@ -2,7 +2,6 @@ use super::{ Partial, Sample, Hz, SamplesPerSecond };
 
 pub struct Instrument {
     pub partials: Vec<Partial>,
-    pub complete: bool,
 }
 
 impl Instrument {
@@ -10,8 +9,7 @@ impl Instrument {
         Self {
             partials: partial_multipliers.iter()
                 .map(|&p| Partial::new(1.0, 1.0, p, 0.0, sample_rate, 2000, base_freq))
-                .collect(),
-            complete: false,
+                .collect()
         }
     }
 
@@ -34,7 +32,6 @@ impl Iterator for Instrument {
             .map(|i| i.unwrap()).collect();
 
         if filtered.is_empty() {
-            self.complete = true;
             None
         } else {
             Some(filtered.iter().sum())
