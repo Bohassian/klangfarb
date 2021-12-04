@@ -22,8 +22,12 @@ use osc::{Osc, Waveform};
 pub mod envelope;
 use envelope::Envelope;
 
+mod partial;
+use partial::Partial;
+
 mod instrument;
 use instrument::Instrument;
+
 
 mod utils;
 
@@ -75,7 +79,7 @@ impl MonoSynth {
         let sprt = 48000.0;
 
         Self {
-            instrument: Instrument{osc_bank: vec![Osc::new(freq, sprt), Osc::new(400.0, sprt)], envelope: Envelope::new(30, 500, 0.5, 1000, sprt)},
+            instrument: Instrument::new(freq, vec![1.0, 0.909], sprt),
             sample_rate: sprt,
             frequency: freq,
             apply_bend: false,
@@ -202,7 +206,7 @@ impl MonoSynth {
     #[export]
     fn trigger(&mut self, _owner: &Node,
     ) {
-        self.instrument.envelope = Envelope::new(self.attack, self.decay, self.sustain, self.release, self.sample_rate);
+        ()
     }
 
     #[export]

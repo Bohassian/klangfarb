@@ -1,11 +1,18 @@
-use super::{ Osc, Envelope, Sample };
+use super::{ Partial, Sample, Hz, SamplesPerSecond };
 
 pub struct Instrument {
-    pub osc_bank: Vec<Osc>,
-    pub envelope: Envelope,
+    pub partials: Vec<Partial>,
 }
 
 impl Instrument {
+    pub fn new(base_freq: Hz, partial_multipliers: Vec<f32>, sample_rate: SamplesPerSecond) -> Self {
+        Self {
+            partials: partial_multipliers.iter()
+                .map(|&p| Partial::new(1.0, 1.0, p, 0.0, sample_rate, 2000, base_freq))
+                .collect()
+        }
+    }
+
     pub fn sample(&mut self) -> Sample {
         match self.next() {
             Some(s) => { s },
@@ -18,12 +25,16 @@ impl Iterator for Instrument {
     type Item = Sample;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let goo : f32 = self.osc_bank.iter_mut().map(|o| o.sample()).sum();
-        let scaled = goo / self.osc_bank.len() as f32;
+        let partial_samps : Vec<Option<Sample>> = self.partials.iter_mut()
+            .map(|o| o.next()).collect();
 
-        match self.envelope.next() {
-            Some(a) => Some(scaled * a),
-            None => None
+        let filtered : Vec<Sample> = partial_samps.iter().filter(|opt| opt.is_some())
+            .map(|i| i.unwrap()).collect();
+
+        if filtered.is_empty() {
+            None
+        } else {
+            Some(filtered.iter().sum())
         }
     }
 }
@@ -35,11 +46,9 @@ mod tests {
     #[test]
     fn test_name() {
         let sr = 44800.0;
-        let mut inst = Instrument {
-            osc_bank: vec![Osc::new(220.0, sr), Osc::new(440.0, sr), Osc::new(880.0, sr)],
-            envelope: Envelope::new(10, 200, 0.7, 1000, sr),
-        };
+        let mut inst = Instrument::new(220.0, vec![1.0, 2.0, 4.0], sr);
 
         assert_eq!(inst.next(), Some(0.0));
+        assert_eq!(inst.last(), Some(0.0));
     }
 }

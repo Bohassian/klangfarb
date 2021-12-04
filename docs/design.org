@@ -89,4 +89,34 @@ An Instrument is N Sine(?) waves with an Envelope applied to it.
 it implements Iterator so that ~next()~ sums the oscillators,
 scales them down by 1/N, and multiplies by the Envelope value.
 
+** Partial
 
+
+
+ The four arguments to each invocation of the partial abstraction specify:
+
+amplitude.
+The amplitude of the partial at its peak, at the end of the
+attack and the beginning of the decay of the note.
+
+relative duration.
+This is multiplied by the overall note duration (controlled
+in the main patch) to determine the duration of the decay portion of the
+sinusoid. Individual partials may thus have different decay times, so that
+some partials die out faster than others, under the main patch's overall
+control.
+
+relative frequency.
+As with the relative duration, this controls each partial's
+frequency as a multiple of the overall frequency controlled in the main
+patch.
+
+detune.
+A frequency in Hertz to be added to the product of the global frequency and the relative frequency.
+
+Inside the partial abstraction, the amplitude is simply taken directly
+from the ``$1" argument (multiplying by 0.1 to adjust for the high individual
+amplitudes); the duration is calculated from the r duration object, multiplying
+it by the ``$2" argument. The frequency is computed as $fp+d$ where $f$
+is the global frequency (from the r frequency object), $p$ is the relative
+frequency of the partial, and $d$ is the detune frequency. 
