@@ -41,11 +41,13 @@ type Millisecond = u32;
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct MonoSynth {
+    pub osc: Osc,
     pub instrument: Instrument,
     pub sample_rate: SamplesPerSecond,
     pub frequency: Hz,
     pub apply_bend: bool,
     pub phasor_bend: Vector2,
+    pub play_instrument: bool,
     pub continuous: bool,
     pub duration: Millisecond,
     // ADSR amplifier
@@ -75,15 +77,17 @@ impl MonoSynth {
     /// wave.square() # changes to a square wave
     /// ```
     pub fn new(_owner: &Node) -> Self {
-        let freq = 440.0;
+        let freq = 220.0;
         let sprt = 48000.0;
 
         Self {
-            instrument: Instrument::new(freq, vec![1.0, 0.909], sprt),
+            osc: Osc::new(freq, sprt),
+            instrument: Instrument::new(freq, vec![0.56, 0.92, 1.19, 1.7, 2.0, 2.74, 3.0, 3.76, 4.07], sprt),
             sample_rate: sprt,
             frequency: freq,
             apply_bend: false,
             phasor_bend: Vector2::new(0.0, 0.0),
+            play_instrument: false,
             continuous: true,
             duration: 0,
             envelope: Envelope::new(30, 500, 0.5, 1000, sprt),
@@ -104,45 +108,50 @@ impl MonoSynth {
         godot_print!("DAS IST KLANGFARBRS.")
     }
 
-    // #[export]
-    // fn sine(&mut self, _owner: &Node) {
-    //     self.osc.waveform = Waveform::Sine
-    // }
+    #[export]
+    fn sine(&mut self, _owner: &Node) {
+        self.osc.waveform = Waveform::Sine
+    }
 
-    // #[export]
-    // fn square(&mut self, _owner: &Node) {
-    //     self.osc.waveform = Waveform::Square
-    // }
+    #[export]
+    fn square(&mut self, _owner: &Node) {
+        self.osc.waveform = Waveform::Square
+    }
 
-    // #[export]
-    // fn triangle(&mut self, _owner: &Node) {
-    //     self.osc.waveform = Waveform::Triangle
-    // }
+    #[export]
+    fn triangle(&mut self, _owner: &Node) {
+        self.osc.waveform = Waveform::Triangle
+    }
 
-    // #[export]
-    // fn sawtooth(&mut self, _owner: &Node) {
-    //     self.osc.waveform = Waveform::Sawtooth
-    // }
+    #[export]
+    fn sawtooth(&mut self, _owner: &Node) {
+        self.osc.waveform = Waveform::Sawtooth
+    }
 
-    // #[export]
-    // fn white_noise(&mut self, _owner: &Node) {
-    //     self.osc.waveform = Waveform::WhiteNoise
-    // }
+    #[export]
+    fn white_noise(&mut self, _owner: &Node) {
+        self.osc.waveform = Waveform::WhiteNoise
+    }
 
-    // #[export]
-    // fn brown_noise(&mut self, _owner: &Node) {
-    //     self.osc.waveform = Waveform::BrownNoise
-    // }
+    #[export]
+    fn brown_noise(&mut self, _owner: &Node) {
+        self.osc.waveform = Waveform::BrownNoise
+    }
 
-    // #[export]
-    // fn frequency(&mut self, _owner: &Node, frequency: Hz) {
-    //     self.frequency = frequency;
-    //     self.osc.set_frequency(frequency)
-    // }
+    #[export]
+    fn frequency(&mut self, _owner: &Node, frequency: Hz) {
+        self.frequency = frequency;
+        self.osc.set_frequency(frequency)
+    }
 
     #[export]
     fn continuous(&mut self, _owner: &Node, state: bool) {
         self.continuous = state;
+    }
+
+    #[export]
+    fn play_instrument(&mut self, _owner: &Node, state: bool) {
+        self.play_instrument = state;
     }
 
     #[export]
@@ -206,7 +215,7 @@ impl MonoSynth {
     #[export]
     fn trigger(&mut self, _owner: &Node,
     ) {
-        ()
+        self.envelope = Envelope::new(self.attack, self.decay, self.sustain, self.release, self.sample_rate);
     }
 
     #[export]
@@ -221,8 +230,11 @@ impl MonoSynth {
             //     self.osc.set_frequency(self.osc.get_frequency() + modulation_value);
             // }
 
-            let mut sample = self.instrument.sample();
-            // self.osc.last_value = sample;
+            let mut sample = match self.play_instrument {
+                true => self.instrument.sample(),
+                false => self.osc.sample(),
+            };
+            self.osc.last_value = sample;
 
             // TODO:
             // if self.apply_bend {
@@ -236,6 +248,11 @@ impl MonoSynth {
                     Some(a) => a,
                     None => 0.0,
                 }
+            }
+
+            // TODO: For now this enables the instrument to be played multiple times. Would like to find a cleaner way to do this.
+            if self.instrument.complete {
+                self.instrument = Instrument::new(self.frequency, vec![0.56, 0.92, 1.19, 1.7, 2.0, 2.74, 3.0, 3.76, 4.07], self.sample_rate)
             }
 
             frames.push(Vector2::new(sample, sample));
