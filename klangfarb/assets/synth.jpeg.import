@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/moog.JPG-f233f2842c5d6fb78dc4e01163dddabf.stex"
+path="res://.import/synth.jpeg-0d3692b736009049abb06e73100121d7.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/moog.JPG"
-dest_files=[ "res://.import/moog.JPG-f233f2842c5d6fb78dc4e01163dddabf.stex" ]
+source_file="res://assets/synth.jpeg"
+dest_files=[ "res://.import/synth.jpeg-0d3692b736009049abb06e73100121d7.stex" ]
 
 [params]
 
