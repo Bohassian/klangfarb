@@ -97,3 +97,6 @@ func _input(event):
 #		phasor_bend.y = event.position.y / 600
 		fm_multiplier = 600 / (event.position.y + 1)
 		synth.fm_frequency(fm_multiplier * freq)
+
+func toggle_playback():
+	self._set_playing(!self.is_playing())
