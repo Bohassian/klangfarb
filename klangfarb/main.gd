@@ -11,7 +11,8 @@ export(bool) var apply_bend = false
 export(Vector2) var phasor_bend = Vector2(0.5, 0.5)
 # duration related
 export(bool) var continuous = true
-export(int, 0, 5000, 100) var duration = 3000
+# Used for the total duration of an Instrument note
+export(int, 0, 30000, 100) var duration = 3000
 #Attack/Decay/Release/Sustain
 export(int, 0, 5000, 100) var attack = 100
 export(int, 0, 5000, 100) var decay = 100
@@ -71,6 +72,7 @@ func _process(_delta):
 		synth.set_sustain(sustain)
 		synth.set_release(release)
 		synth.play_instrument(play_instrument)
+		synth.duration(duration)
 		_check_waveform()
 		_fill_buffer()
 

@@ -82,14 +82,14 @@ impl MonoSynth {
 
         Self {
             osc: Osc::new(freq, sprt),
-            instrument: Instrument::new(freq, vec![0.56, 0.92, 1.19, 1.7, 2.0, 2.74, 3.0, 3.76, 4.07], sprt),
+            instrument: Instrument::bell(freq, 10000, sprt),
             sample_rate: sprt,
             frequency: freq,
             apply_bend: false,
             phasor_bend: Vector2::new(0.0, 0.0),
             play_instrument: false,
             continuous: true,
-            duration: 0,
+            duration: 5000,
             envelope: Envelope::new(30, 500, 0.5, 1000, sprt),
             cutoff: 0.0,
             frequency_modulation: false,
@@ -185,6 +185,11 @@ impl MonoSynth {
     }
 
     #[export]
+    fn duration(&mut self, _owner: &Node, duration: Millisecond) {
+        self.duration = duration
+    }
+
+    #[export]
     fn set_attack(&mut self, _owner: &Node, attack: Millisecond) {
         self.attack = attack
     }
@@ -215,7 +220,7 @@ impl MonoSynth {
     #[export]
     fn trigger(&mut self, _owner: &Node,
     ) {
-        self.instrument = Instrument::new(self.frequency, vec![0.56, 0.92, 1.19, 1.7, 2.0, 2.74, 3.0, 3.76, 4.07], self.sample_rate);
+        self.instrument = Instrument::bell(self.frequency, self.duration, self.sample_rate);
         self.envelope = Envelope::new(self.attack, self.decay, self.sustain, self.release, self.sample_rate);
     }
 
@@ -244,7 +249,7 @@ impl MonoSynth {
             //     self.phasor.phase = next_phase;
             // }
 
-            if !self.continuous {
+            if !self.continuous && !self.play_instrument {
                 sample *= match self.envelope.next() {
                     Some(a) => a,
                     None => 0.0,
