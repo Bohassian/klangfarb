@@ -60,19 +60,12 @@ func _check_waveform():
 
 func _process(_delta):
 	if self.is_playing():
-		synth.apply_bend(apply_bend)
-		synth.frequency(freq) 
-		synth.phasor_bend(phasor_bend)
-		synth.frequency_modulation(frequency_modulation)
-		synth.fm_frequency(fm_multiplier * freq)
-		synth.fm_depth(fm_index)
 		synth.continuous(continuous)
 		synth.set_attack(attack)
 		synth.set_decay(decay)
 		synth.set_sustain(sustain)
 		synth.set_release(release)
 		synth.play_instrument(play_instrument)
-		synth.duration(duration)
 		_check_waveform()
 		_fill_buffer()
 
@@ -87,18 +80,15 @@ func _ready() -> void:
 	_check_waveform()
 	_fill_buffer()
 
-func _input(event):
-	# Mouse in viewport coordinates.
-	if event is InputEventMouseButton && event.is_pressed():
-		print("Mouse Click/Unclick at: ", event.position)
-		synth.trigger()
-	elif event is InputEventMouseMotion:
-		freq = event.position.x
-		synth.frequency(freq) 
-#		phasor_bend.x = event.position.x / 1024
-#		phasor_bend.y = event.position.y / 600
-		fm_multiplier = 600 / (event.position.y + 1)
-		synth.fm_frequency(fm_multiplier * freq)
-
 func toggle_playback():
 	self._set_playing(!self.is_playing())
+
+func _on_duration_value_changed(value):
+	synth.duration(int(value))
+
+func _on_pitch_value_changed(value):
+	synth.frequency(value)
+
+func _on_bell_click(event):
+	if event is InputEventMouseButton && event.is_pressed():
+		synth.trigger()
